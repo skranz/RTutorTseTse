@@ -1,0 +1,106 @@
+orgvar | var | descr
+
+name | name | name of the ethnic group
+
+SI | SI | FAO's agricultural suitability index. Measures the suitability of the soil for rain fed farming. The index is normalized and ranges from 0 to 1. A higher value mean, that the area the group lived in was very suitable for agriculture.
+
+isocode | isocode | country code
+
+malaria | malaria | A index called malaria ecology index. It approximates the predominance of serious malaria forms.
+
+meanrh | meanrh | The average relative humidity. 
+
+meantemp | meantemp | The average temperature.
+
+itx | itx | The first-order interaction between temperature and humidity.
+
+r | r | positive Tsetse growth rate 
+
+prop_tropics | prop_tropics | The proportion of land area in the tropics. Ranges from 0 to 1. 
+
+coast | coast | A dummy variable, 0 if the boundries did not include a coast, 1 if they did
+
+river | river | A dummy variable, measuring if there was a river located inside the group boundaries. 1 if there was a river, 0 if not
+
+meanalt | meanalt | The mean altitude. Measuring the height above the sea level in kilometres.
+
+lat | lat | latitude. A geographical coordinate, which defines the north-south position of the group on the surface of the earth.
+
+lon | lon | The longitude. A geographical coordinate, which defines the east-west position of the group on the surface of the earth.
+
+province | province | number, coding cultural provinces. The classification is based on spatial proimity and genealogical/cultural relateness.
+
+TSI | TSI | standardised Tsetse suitability index, measures the distribution of the Tsetse fly. Climate data are from controlled labroratory experiments.
+
+perturb_TSI1 | perturb_TSI1 | left shift of the TSI.
+
+perturb_TSI2 | perturb_TSI2 | right shift of the TSI.
+
+abslat | abslat | The absolute latitude. A geographical coordinate, which defines the north-south position of the group on the surface of the earth.
+ 
+slavery | slavery | dummy variable.  1 for all forms of beginning or recorded slavery and slavery transmitted as a heritage to the next generation. 0 stands for no forms of slavery.
+
+intensive | intensive | dummy variable, 1 if the group performed intensive or intensive and irrigated farming, 0 if not
+
+plow | plow | dummy variable, 1 if the group used a plow, 0 if not.
+
+animals | animals | dummy variable, 1 if the ethnic group kept large domesticated animals like domestic castles, camelids, deer or equine, 0 if not.
+
+central | central | dummy variable. 0 stands for groups who do not have a form of centralized state. 1 is coded for any other form like small chiefdoms, large and predominant chiefdoms, minor and large states. 
+
+female_ag | female_ag | dummy variable. 1 if women did most of the agricultural tasks and 0 if not.
+
+optimum | optimum | variables, measuring the optimal fly survival. Climate data are taken from field research.
+
+ln_popd | ln_popd | the population density is calculated as log(residents per square kilometre).
+
+gathering | gathering | variable describing the dependence on gathering. Ordinal scale from 0 to 9.
+
+hunting | hunting | variable describing the dependence on hunting. Ordinal scale from 0 to 9.
+
+fishing | fishing | variable describing the dependence on fishing. Ordinal scale from 0 to 9.
+
+husbandry | husbandry | variable describing the dependence on husbandry. Ordinal scale from 0 to 9.
+
+agriculture | agriculture | variable describing the dependence on agriculture. Ordinal scale from 0 to 9.
+
+name | name | variable describes the name of the ethnic groups, which are located in the tropics in and outside Africa.
+
+africa | africa | dummy variable. 1 if the ethnic group lived in Africa, 0 if they lived outside.
+
+language | language | cathegorical variable which clusteres the ethnic groups in language subfamilies. So, it describes the linguistic affiliation.
+
+africa_rhum | africa_rhum | the product resulting from the multicplication of the dummy variable "africa" and the variable "meanrh". Equals 0 for ethnic groups outside Africa and the variable "meanrh" for groups inside Africa.
+
+africa_itx | africa_itx | the product resulting from the multicplication of the dummy variable "africa" and the variable "itx". Equals 0 for ethnic groups outside Africa and the variable "itx" for groups inside Africa.
+
+africa_malaria | africa_malaria | the product resulting from the multicplication of the dummy variable "malaria" and the variable "meanrh". Equals 0 for ethnic groups outside Africa and the variable "malaria" for groups inside Africa.
+
+africa_SI | africa_SI | the product resulting from the multicplication of the dummy variable "africa" and the variable "SI". Equals 0 for ethnic groups outside Africa and the variable "SI" for groups inside Africa.
+
+africa_alt | africa_alt | the product resulting from the multicplication of the dummy variable "africa" and the variable "meanalt". Equals 0 for ethnic groups outside Africa and the variable "meanalt" for groups inside Africa.
+
+africa_coast | africa_coast | the product resulting from the multicplication of the dummy variable "africa" and the variable "coast". Equals 0 for ethnic groups outside Africa and the variable "coast" for groups inside Africa.
+
+africa_abslat | africa_abslat | the product resulting from the multicplication of the dummy variable "africa" and the variable "abslat". Equals 0 for ethnic groups outside Africa and the variable "abslat" for groups inside Africa.
+
+africa_rivers | africa_rivers | the product resulting from the multicplication of the dummy variable "africa" and the variable "river". Equals 0 for ethnic groups outside Africa and the variable "river" for groups inside Africa.
+
+africa_lon | africa_lon | the product resulting from the multicplication of the dummy variable "africa" and the variable "lon". Equals 0 for ethnic groups outside Africa and the variable "lon" for groups inside Africa.
+
+africa_tsetse | africa_tsetse | the product resulting from the multicplication of the dummy variable "africa" and the variable "TSI". Equals 0 for ethnic groups outside Africa and the variable "TSI" for groups inside Africa.
+
+adm1_code | adm1_code | a unique number which identifies the observed district. This variable is the primary key for the dataset subnational.
+
+ln_lights | ln_lights | the variable is calculated as log (average luminosity + 0.01). The luminosity is measured by night in the year 2008 and is an indicator for development.
+
+tsi | tsi | the TseTse suitability index, calculated with modern climate data for the years between 1961 and 1990.
+
+ln_livestock | ln_livestock | the variable is calculated as log(number of cattle +1). It measures the number of cattles in the year 2005.
+
+near_inlandwater | near_inlandwater | a dummy variable. 1 if the area is close to a lake or river, which is bigger than 500 square kilometers. 0 if not.
+
+adm0_code | adm0_code | the defines for every district saved in adm1_code the superior African state.
+
+frcn_central | frcn_central | The rate of nowadays inhabitants whose forebears lived in a society which is classified as centralized.
+

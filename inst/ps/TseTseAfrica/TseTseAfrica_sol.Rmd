@@ -1,0 +1,2423 @@
+Problem set: The effect of the TseTse fly on African Development
+
+Author:  Vanessa Schoeller  
+Date:    18.05.2017  
+
+#< ignore
+```{r "create_ps"}
+library(restorepoint)
+# facilitates error detection
+# set.restore.point.options(display.restore.point=TRUE)
+
+library(RTutor)
+library(yaml)
+#library(restorepoint)
+setwd("C:/Users/Vanessa/Desktop/Uni")
+ps.name = "TseTseAfrica"; sol.file = paste0(ps.name,"_sol.Rmd")
+libs = c("ggplot2", "foreign", "ggmap", "regtools", "lfe", "dplyr", "stargazer", "lmtest", "sandwich") # character vector of all packages you load in the problem set
+#name.rmd.chunks(sol.file) # set auto chunk names in this file
+create.ps(sol.file=sol.file, ps.name=ps.name, user.name=NULL,libs=libs, stop.when.finished=FALSE, addons="quiz", var.txt.file="var.txt", use.memoise = TRUE)
+show.shiny.ps(ps.name, load.sav=FALSE,  sample.solution=TRUE, is.solved=FALSE, catch.errors=TRUE, launch.browser=TRUE)
+stop.without.error()
+
+
+```
+#>
+
+
+## Exercise Overview
+
+### Introduction
+
+Welcome to this problem set! It is the main part of my Bachelor thesis at the University Ulm.
+  
+#### "It has long been an axiom of mine that the little things are infinitely the most important."
+(Arthur Conan Doyle 1892)
+
+This quotation is from the British physician and writer Arthur Conan Doyle best known for creating the stories about Sherlock Holmes. It describes well the question we investigate in this problem set. What effect does the TseTse fly has on the African development? In the past researches mainly investigated how communicable diseases harmful for humans affected the economic output. We will adapt a different approach and focus on how animal trypanosomiasis the veterinary disease transmitted by TseTse acted on the development. Is it possible that a fly no bigger than 1.5 cm affects the development of multiple African countries lying in the tropics? 
+This leading research question can be assigned to the field of comparative development economics. We will mainly compare the historical evolution of economic organizations in Africa. 
+
+To approach this question, we adapt the structure and content from the paper **"The effect of the TseTse fly on African development"** by Marcella Alsan (2013). You find the paper and the corresponding data [here](https://www.aeaweb.org/articles?id=10.1257/aer.20130604). This problem set replicates the author's work with the help of the statistic program R. You can just click yourself through it, have fun and incidentally learn more about statistical programming with R, how to work with econometric data, and last but not least the effect of the fly.
+
+
+### The structure of the problem set:
+  
+```  
+  1  Loading and analyzing the data  
+    
+  2  Introduction of the TseTse suitability index: laboratory experiments and empirical framework   
+    
+  3  Visual comparison of the suitability for TseTse with the suitability for rainfed agriculture in Africa
+    
+  4  Regression: Correlation between subsistence strategies and the TSI  
+  
+      4.1 Linear and Multiple Regression  
+       
+      4.2 Clustered robust standard errors  
+      
+  5  Regression: Correlation between development variables and the TSI  
+     
+  6  Placebo test: Correlation between TSI and development in the tropics outside Africa  
+    
+  7  Simulation of Africa without the TseTse and archeological evidence illustrated by the example of Great Zimbabwe
+        
+  8  Impact of the TseTse on modern African development   
+        
+  9  Robustness tests   
+     
+  10 Conclusion and Outlook   
+     
+  11 References   
+     
+```
+
+### Notes on how to work with the elements of the problem set
+The problem set consists of normal text, code blocks, info blocks, and quizzes.     
+
+You can solve the exercises in any possible order. Nevertheless, I recommend completing the exercise sheets sequentially because there are concepts introduced in early exercises which are assumed to be understood in later ones. The tasks inside a tab must be solved in the given order. That means you cannot solve 1 b) if you have not solved 1 a) beforehand.
+The problem set contains several info-blocks which give additional information about R packages, background information or comments. You can read them by just clicking on the headline.
+Also, there are several small quizzes included which test if you did understand the coherences. The quizzes are optional and you can continue the problem set without having solved them. 
+So much for the basics. Everything else you need to know will be explained when we work with it.  
+  
+**Let us start our economic journey!**
+
+## Exercise 1 -- Loading and analyzing the data
+
+### General information about Tsetse
+Maybe one of your first questions will be: **"What is the TseTse fly?"**  
+   
+  
+<img src="figure/Tsetse_picture.png" style="width: 75%; height: 75%">  
+    
+    
+*Figure 1: Image of the Tsetse,*   
+*Source: International Atomic Energy Agency, https://commons.wikimedia.org/w/index.php?curid=42087829*  
+  
+The TseTse fly is endemic to Africa and found in most tropical African countries.
+Female and male TseTse flies feed on human and animal blood. While doing this they act as a vector for the parasite Trypanosoma which causes the sickness Trypanosomiasis. If you want to find out more about how the transmission of the parasite works, just open the info block below. One can distinguish between human Trypanosomiasis also known as sleeping sickness and animal Trypanosomiasis also called Nagana or animal sleeping sickness. To make it clearer and easier we will mainly use the term sleeping sickness in this problem set and refer to the form that infects animals.
+ 
+  
+#< info "Transmission of Trypanosomiasis"
+Trypanosomiasis can be transmitted in two ways by the TseTse. Either through mechanical transmission or biologically.
+
+In the mechanical transmission the fly works like a needle and transmits the parasite directly from one infected living being to another uninfected. This would be the case if the period till the TseTse bites the next uninfected mammal is short enough. For example if the TseTse is interrupted in taking a blood meal. 
+
+The other form of transmission is called biologically or cyclically. The TseTse feeds on the blood of an infected host and gets infected itself. Now the fly can transmit the fatal parasite each time it bites a living being for the rest of its life.
+#>
+    
+This parasite transmitted by the TseTse fly is harmful for humans and animals and without treatment it mostly ends fatally. Because of this lethality we could assume that a disease which kills the infected animal fast might eradicate itself. But wild game which is immune serves as a reservoir. Also, all huffed animals can be affected which is the special danger of Trypanosomiasis compared to most other veterinary diseases which only infect one species (Brown and Gilfoyle 2010).
+
+In the following exercises, we will have a closer look on how the fly influenced ethnic groups living in precolonial Africa. This helps us to get a better understanding of the differences in economic performances in modern Africa. We will focus on animal trypanosomiasis not the forms that infects humans. Is it possible that a little fly affects the agricultural production, political centralization, and population density of multiple countries?   
+    
+### Loading and analyzing the data
+
+To work with the data, we first have to load it. 
+The data we want to use in our problem set is stored in Stata. Stata is a statistical software and Alsan (the author of the paper that provides the base of this problem set) used it for her analysis. R provides a package called <span style="color:mediumvioletred">foreign</span> with this we can read in the data from Alsan's paper. For more information about the used package right click [here](https://cran.r-project.org/web/packages/foreign/foreign.pdf) and open a new tab. If you did not hear about R packages before, open the info section and find out more.
+
+#< info "Packages in R"
+R is an open source software which means that the source code is available for everyone. This means anybody can copy, use, or change the code. There are over 10,000 user-created packages (status: March 2017) available which expand the application possibilities enormously (CRAN 2016). To get an overview over all packages implemented in R right click [here](https://cran.r-project.org/) and open a new tab.  
+Packages are files which must be installed and loaded separately. If we find a useful package, we install it once with the command <span style="color:mediumvioletred">install.packages("name of the package")</span> and load it in every new session with <span style="color:mediumvioletred">library(name of the package)</span>.
+While working through this problem set we will use some packages and you will see that they simplify our work and help us to create easy and elegant code.
+#>
+   
+Below you see the first code chunk. I will give you a short instruction on how the elements of the problem set work even if it is mostly intuitive. At first you click **edit**. Then you can select between **check**, **hint**, **run chunk**, **data**, and **solution**. The normal way is that you insert your answer in the chunk, click **check** and get a message if your answer is right or wrong. If you are right, you can just continue solving the rest of the problem set. If you typed in a wrong answer, do not worry you can just try an alternative solution as often as you like. Another option is to click **hint** so you will get a tip. If you got completely stuck, you can always click **solution**, get the right code, and click **check** to continue. To have a look at the dataset you can open the Data Explorer by clicking on **data**.
+
+So here is your first task. Click **edit** and afterwards **check**.
+```{r "1 a) "}
+#< task_notest
+# loading the package
+library(foreign)
+# loading the data
+pre = read.dta("precolonial.dta")
+#>
+```
+
+#< award "Data loading"
+Great, you managed the first important step to work with the data the loading. Additionally, you solved the first code chunk of the problem set.  
+  
+There are several awards spread over the exercises, how many can you win? If you want to get an overview on the awards you already gained, just type <span style="color:mediumvioletred">awards()</span> in a given code chunk.
+#>
+    
+The loaded data is one of three cross-sectional datasets we will use in this problem set. You will get information about the other datasets every time before we start working with them.  
+
+Some general background information about the loaded <span style="color:mediumvioletred">precolonial</span> data: The dataset <span style="color:mediumvioletred">precolonial.dta</span> is an extract of a global database called Ethnographic Atlas containing historical characteristics of more than 500 ethnic groups that are still living or have lived in Africa before the European settlement. The data is collected between 1800 and the beginning of the twentieth century. The observed dataset is cross-sectional. If you wish to find out more, please open the following info sector.
+
+#< info "Type of data: cross-sectional, time-series and panel-data"
+There is a variety of economic data types. In the following we will discuss shortly the differences between some selected ones.
+
+A **cross-sectional dataset** is collected by observing multiple subjects (here ethnic groups) at the same point of time. Sometimes the data is not collected at exactly the same time. In this case the time difference is often just ignored. An important feature of cross-sectional data is that ordering does not matter and does not affect any econometric analysis.
+
+Another widely used type of data is **time-series** data. Here data is collected of at least one object at several points in time. Time is an important factor because past events often influence future ones. In this case the chronical ordering matters. So if we assume that the data is related over time, time-series data is more difficult to analyze.
+
+A third type of data is called **panel data** and can be seen as a combination of times-series and cross-sectional data. We have data of repeated cross sections at several points in time. Hence it is like a time series for every cross-section element contained in the data. The special feature about this type of data is that the data is collected every time from the **same** cross-sectional units. 
+
+(Wooldridge 2010, p. 5-12)
+#>
+
+Now we want to get an overview of the data. One interesting thing to know about the dataset: How many rows and columns are contained in the dataset? The right command here is <span style="color:mediumvioletred">dim()</span>. Inside the brackets you define which dataset should be used. Here we want to get more details about the recently loaded <span style="color:mediumvioletred">precolonial.dta</span> saved in the variable <span style="color:mediumvioletred">pre</span>. Please insert the right command in the field below and click <span style="color:mediumvioletred">check</span>.
+
+```{r "1 b) "}
+# type in the right command here.
+dim(pre)
+```
+
+#< award "First steps of data analyzing"
+Well done! You learned and applied the first commands to get an overview of the data we want to work with.
+#>
+   
+   
+   
+#< quiz "dim"
+question: How many rows and columns does the dataset contain?
+sc:
+  - 522 rows and 34 columns*
+  - 34 rows and 522 columns
+success: Great, your answer is correct!
+failure: Try again.
+#>
+   
+    
+#< award "Quiz beginner"
+Fantastic! You solved your first quiz! There will be a lot more spread over the dataset. Try to solve them all!
+#>
+   
+   
+The command returns two numbers. The first is the number of rows, the second describes the number of columns.
+   
+Let us get into more detail and print out some of the 522 rows of the dataset. The command <span style="color:mediumvioletred">head()</span> will print out the first six rows of the dataset. Use the command on the dataset <span style="color:mediumvioletred">pre</span>.
+
+```{r "1 c) "}
+head(pre)
+```
+   
+Every row describes several characteristics of an ethnic group. For example, the first row of the printed-out dataset contains information about the community of the Ababda. 
+  
+  
+#< quiz "Ababda"
+question: Where did the Ababda live? 
+sc:
+    - Egypt*
+    - Ghana
+    - Uganda
+success: Great, your answer is correct!
+failure: Try again. A small hint, have a look at the third column isocode
+#>
+   
+   
+Some of the other columns might be not as clear from the beginning because they need more interpretation. We will go through them systematically in the following exercises and in doing so we learn what the dataset exactly is about. If you want to get an overview of all variables contained in the dataset combined with a short description, you can always open the **Data Explorer** by clicking on the tab **data** in the heading of each task.
+  
+*This exercise refers to page 1 - 4 of the paper.*
+
+## Exercise 2 -- Introduction of the TseTse suitability index: Laboratory experiments and empirical framework
+
+To analyze the effect of the TseTse fly on African development we first have to find out how the TseTse fly was distributed in precolonial Africa.  
+
+### General information
+Marcella Alsan the author of the paper which provides the base of the problem set developed the TSI which is short for TseTse suitability index. The TSI measures the distribution of the TseTse fly with help of climate data from precolonial Africa. The index is developed by using controlled laboratory experiments. Temperature and humidity are the input variable to define a function for the TseTse birth and death rate. Birth and death rate are then combined to a function that describes the TseTse population depending on temperature and humidity. 
+
+#< info "TseTse physiology"
+Insects like the TseTse have a large surface compared to their volume. If humidity is too low, the flies will desiccate and die. Especially pupas are very temperature sensitive and will metabolize their lipid reserves too fast or too slow if the temperature does not fit. 
+(Schowalter 2016, p. 53)
+#>
+
+In a last step the TseTse population function is combined with historical climate data and results in the TSI. The used climate data is collected by the National Oceanic and Atmospheric Administration's 20th Century Reanalysis. This reanalysis contains temperature and humidity data on a daily basis since 1871. The author combines these daily climate variables to develop the TSI.
+The big advantage of this index is that it can be considered exogenous. For example if we would use the cattle distribution, the exogeneity is not given. More about exogeneity in the info block.
+
+#< info "Why we use method of potential to estimate the population of the TseTse fly?"
+It is not sufficient to look at today's Africa determine the number of flies and equal the measured number with historical Africa. The amount and distribution of the TseTse fly now and before the colonialization can differ because climate changes constantly over time. The population of the fly reacts very sensitive to changes in temperature and humidity.  
+
+Another advantage of the applied method of TseTse fly calculation is that we avoid measuring reverse causality. We focus on the suitability of the climate for the viability of the TseTse fly instead of looking at the actual amount. So we prevent measuring the effect that countries with higher developed state institutions could develop more effective methods to control the TseTse fly and because of these advanced methods of fly control the number of flies decreases over time. Through this method of potential we separate the impact of the TseTse fly on state development from the reverse effect that stronger institutions have on the TseTse population.
+#>
+  
+### Analyzing the TSI distribution
+So much for the theory of the TSI. Now we want to analyze the index with statistical methods. Therefore, we load the dataset <span style="color:mediumvioletred">precolonial</span>. This time it is your turn. In case you are not quite sure have a look at the exercise before.
+
+```{r "2 a) "}
+#< task_notest
+# load the dataset precolonial.dta and assign it to the variable pre. The right command is read.dta("")
+#>
+pre = read.dta("precolonial.dta")
+
+```
+Our first dataset precolonial contains a TSI for every African ethnic group.
+First let us calculate the mean of the variable.
+The right R command is <span style="color:mediumvioletred">mean()</span>. To address the variable TSI contained in the dataset <span style="color:mediumvioletred">pre</span> we write <span style="color:mediumvioletred">pre$TSI</span>. Please insert the code in the field below.
+
+```{r "2 b) "}
+mean(pre$TSI)
+```
+
+Second, we want to measure the spread of the TSI distribution. Please calculate the standard deviation with the command <span style="color:mediumvioletred">sd()</span>.
+```{r "2 c) "}
+sd(pre$TSI)
+```
+
+#< award "basics data analysis"
+Great, you managed the first important steps of data analysis!   
+It is always a good idea to calculate the mean and standard deviation of a variable to get a better understanding of its distribution.
+#>
+
+Now we know that the standard deviation of the TSI is about 1 with a mean of 0.
+
+Through this basic calculation we got a first idea of the data. This is important so we can use the right statistical instruments later and interpret the results. 
+
+### Density plot
+
+To get a more detailed picture of the data we plot it and compare it with the standard normal distribution. Therefore, we use density-plots.
+
+To compute the standard deviation we use the command <span style="color:mediumvioletred">rnorm()</span> which generates random numbers. The first number passed to this command defines the amount of random numbers. In order to create the standard normal distribution plug the corresponding mean and standard distribution into the function rnorm(). 
+
+To solve the task you first have to remove the <span style="color:mediumvioletred">#</span> and then replace the <span style="color:mediumvioletred">???</span> with the right code elements.
+
+```{r "2 d) "}
+#< task_notest
+# Replace the ??? in the code below and uncomment the command.
+# with help of the function rnorm() generate 100.000 random numbers from a normal distribution and saves it in the variable x
+
+# x <- rnorm(100000, mean = ?, sd = ?)
+#>
+x <- rnorm(100000, mean = 0, sd = 1)
+```
+Now we have a variable called <span style="color:mediumvioletred">x</span> which approximates a normal distribution.
+
+Your second task is to create a density plot of the TSI. In the first row the command to plot the normal distribution is already given you can adapt this to create your own code.
+
+Like in the task before just remove the <span style="color:mediumvioletred">#</span> and replace the <span style="color:mediumvioletred">???</span> with the right code elements.  
+```{r "2 e) "}
+#< task_notest
+# plot(density(x), col = "red", main = "Density plot comparison: Standard normal distribution and TSI") 
+
+# print a green plot of the TSI
+# lines(???????(pre$???) , ??? = "green")
+#>
+plot(density(x) , col = "red" , main = "Density plot comparison: Standard normal distribution and TSI") 
+lines(density(pre$TSI) , col = "green")
+```
+
+#< award "First plot"
+Bravo! You produced your first plot. Plots are helpful to visualize data especially if we have a huge amount. It makes it easier to interpret statistical coherences.
+#>
+
+### Standardization
+Why does the distribution look like this?
+
+The TSI is a standardized value called z-score of the steady state population. Every observation of the TSI is subtracted by the expected value of TSI and afterwards divided by the standard deviation. 
+The result is a standardized random variable with a mean of zero and a standard deviation of one. The formula looks like this:
+
+**<span class="math">$$z_i = \frac{TSI_i - \overline{TSI}} {sd_{TSI}}$$</span>**
+  
+What are the advantages of a standardized value when it comes to analyzing the data?  
+One benefit is that the standardization makes it easier for us to interpret the regression because a change by one unit equals the standard deviation. So we have the comparison to the entire population instead of just an absolute number which often matches our point of interest. Also, we can compare the coefficients of several regression easier. An additional advantage of the standardization is that we see at a glance if a value is above or below average.  
+The standardization does not influence the statistical significance of the performed analysis.
+(Wooldridge 2013, p. 187-189, 852; Auer 2015, p. 54-56, 217-218)
+
+Now we know more about the variable TSI which we will use in most exercise of this problem set. 
+  
+  
+*This exercise refers to page 8-9 of the paper and appendix C.*
+
+## Exercise 3 -- Visual comparison of the suitability for TseTse with the suitability for rainfed agriculture in Africa
+
+### Distribution of TSI over Africa 
+After analyzing the TSI we want to see how it was distributed over historical Africa. 
+   
+   
+     
+#< quiz "TseTse distribution"
+question: Have a guess! In which parts of historical Africa do we find a high TSI?
+sc:
+    - far in the northern and southern parts of Africa
+    - the TSI is in all parts of the country approximately the same
+    - near the equator*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+    
+  
+   
+We aim to answer this question with a plot showing Africa together with the TseTse distribution. Therefore, we use the package <span style="color:mediumvioletred">ggmap</span>.  
+
+#< info "ggmap"
+With help of the functions contained in the package <span style="color:mediumvioletred">ggmap</span> we can visualize spatial data. Also, we can combine the data with statistic maps from online providers like Google Maps.
+
+(Kahle and Wickham 2016)
+#>
+  
+Unfortunately, the code is very slow. That is why I already run the code, plotted the map, and saved it in the file called <span style="color:mediumvioletred">africamap_TSI</span>. If you want to see the code which prints the map, please open the note block below.
+
+#! start_note "How to plot a map of Africa with the TSI distribution"
+This is the code which creates a map of Africa combined with the TSI. Please do not run the code because it is quite slow.
+```{r "3 a)", optional=TRUE}
+#< task
+# loading the data
+pre = read.dta("precolonial.dta")
+
+# loading the packages
+library(ggmap)
+library(ggplot2)
+
+# building the map
+pre$latlon = paste0(pre$lat , ":" , pre$lon)
+pre$const = 1
+
+loc = c(min(pre$lon) * 1.1 , max(pre$lat) * 0.9 , max(pre$lon) * 0.9 , min(pre$lat) * 1.1)
+map <- get_map(location = loc, zoom = 3)
+map <- get_map(location = 'Africa', zoom = 3)
+
+mp <- ggmap(map) + geom_point(aes(x = lon , y = lat , color = TSI) , data = pre , alpha = .5 ,
+                              size = 5) + scale_color_gradientn(colors = c("red" , "blue"))
+
+# saving the plot
+# saveRDS(mp , file = "africamap_TSI")
+#>
+```
+
+#! end_note
+
+
+Now we load the map saved in the file <span style="color:mediumvioletred">africamap_TSI</span> and print it out.
+
+```{r "3 b)", fig.width=12, fig.height=8}
+
+#< task
+mp = readRDS("africamap_TSI")
+mp
+#>
+```
+
+The graphic shows a map of Africa joined with the TSI. On this map we ordered the ethnic groups following their historical place of residence. For every ethnic group our dataset contains a value describing the TseTse suitability. The colored circles range from blue to red and describe if the region has a high or low suitability for the fly.
+   
+   
+   
+#< quiz "Africa and TSI"
+question: What does a blue circle mean regarding the TSI?
+sc:
+    - a high TSI and many TseTse flies*
+    - a low TSI and few TseTse flies in this region
+success: Great, your answer is correct!
+failure: Try again.
+#>
+    
+    
+    
+Now we know more about the distribution of TSI within Africa. In the next step, we want to compare it with the variable <span style="color:mediumvioletred">SI</span>. 
+
+### Distribution of SI over Africa 
+SI is the abbreviation for FAO's agricultural suitability index. It measures the suitability of a region for rainfed farming. The index is normalized and ranges from 0 to 1. Therefor the specific conditions of climate, soil, and terrain which influence the farming output are analyzed. Then the index is developed by comparing this data with the specific circumstances of the regions. A higher value means that the area the group lived in was very suitable for agriculture.
+
+#< info "FAO"
+FAO is the abbreviation for the Food and Agriculture Organization of the United Nations. For background information right click [here](http://www.fao.org/about/en/) and open a new tab.
+#>
+   
+   
+   
+#< quiz "SI distribution"
+question: Guess what! Which parts of Africa were particularly fertile?
+sc:
+    - near the equator*
+    - far in the northern and southern parts of Africa
+    - there are no big differences in fertility. The SI is in all parts of the country approximately the same
+    
+success: Great, your answer is correct!
+failure: Try again.
+#>
+  
+  
+  
+Let us now test your assumption and print out a map of Africa joint with SI.
+Like before you can have a look at the note-block to see how the map was exactly calculated or just continue to the task where we load the prepared plot.
+
+#! start_note "How to plot a map of Africa with the SI distribution"
+Below you find the code which creates a map of Africa combined with the <span style="color:mediumvioletred">SI</span>. Please do not run the code because it is quite slow.
+```{r "3 c)", optional=TRUE}
+#< task
+mp2 <- ggmap(map) + geom_point(aes(x = lon, y = lat , color = SI) , data = pre , alpha = .5 ,
+                              size = 5) + scale_color_gradientn(colors = c("red" , "blue"))
+
+# saving the plot
+# saveRDS(mp2 , file = "africamap_SI")
+#>
+```
+
+#! end_note
+
+This time it is your turn to load the plot. 
+The map is saved in a file called africamap_SI. Please save the loaded map in a variable called <span style="color:mediumvioletred">mp2</span>.  
+If you experience difficulties, just have a look at the previous tasks and adopt the code. 
+```{r "3 d)"}
+# loading the map with the SI distribution
+mp2 = readRDS("africamap_SI")
+```
+
+Now we want to compare the two plots. Please print out the two maps: mp and mp2.
+
+```{r "3 e)", fig.width=12, fig.height=8}
+mp
+mp2
+```
+  
+  
+  
+#< quiz "SI and TSI"
+question: Do the distribution of SI and TSI shown in the plots above look related? Do TSI and SI seem correlated?
+sc:
+  - yes*
+  - no
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+The aim of this task was not to give evidence of correlation between SI and TSI. We just wanted to get a first graphical impression if the TseTse was mainly prevalent in fertile regions. The result is that it seems like most regions in the dataset are both, suitable for TSI and agriculture or the opposite. But this is only an initial assessment based on our observations. 
+In the next two chapters, we will use regressions to find out more about the correlation between TSI and selected development variables.
+  
+  
+*This exercise refers to figure 3 of the paper.*
+
+## Exercise 4.1 -- Regression: Correlation between subsistence strategies and the TSI: Linear and Multiple regression
+
+In the previous exercises, we learned more about the dataset in general and the variable TSI. In this section, we want to find out if there is a correlation between the subsistence pattern of an historical group and the TseTse fly. 
+
+### Theoretical background
+But why do we want to find out more about the subsistence strategy? How does it help us to explain the precolonial development?
+
+The subsistence strategy of a group affects the group size and the structure of a social group. The economic outcome of hunting is different to agriculture or husbandry and this affects the amount of people that can live together as a group. The strategy used by the group also influences the social structure and migratory patterns. A group that relies on intensive agriculture can cultivate a place several years, whereas a group that relies on hunting must follow the wildlife. Hence if the TSI has an impact on the selected subsistence strategy of a group, it influences the group's development. 
+
+So much for the theoretical background. Now let us load the data and start regressing.
+
+```{r "4 a) "}
+#< task
+# loading the data: 
+pre = read.dta("precolonial.dta")
+#>
+```
+
+### Linear Regression
+
+#### Structure of the variable
+For every row and consequently for every group the dataset contains five values which describe the used food production system. The names of the columns are <span style="color:mediumvioletred">gathering, hunting, fishing, husbandry</span>, and <span style="color:mediumvioletred">agriculture</span>. The variables are categorical and range from 0 to 9. A high value codes high dependence a low number codes that this strategy was not important to feed the group members. 0 equals a dependence of 0-5 % and means that the group did not or little rely on this subsistence strategy. A value of 9 describes a high dependence ranging from 86-100 %. For the values in between the author does not give a direct conversion. This makes it hard to interpret the regression coefficients.
+
+In the first step, we choose the subsistence strategy <span style="color:mediumvioletred">husbandry</span> and analyze how it varies with chances in TSI.
+  
+  
+  
+#< quiz "husbandry"
+question: What does a value of 8 for the variable <span style="color:mediumvioletred">husbandry</span> tells us about the group's subsistence strategy?
+sc:
+  - They highly relied on livestock farming*
+  - They did not keep livestock
+success: Great, your answer is correct!
+failure: Try again.
+#>
+  
+  
+  
+So, the variable <span style="color:mediumvioletred">husbandry</span> describes how much a group relied on livestock farming.
+  
+#### Linear Regression
+In the following we want to calculate a so called OLS regression. 
+
+#< info "OLS regression"
+OLS is short for ordinary least square. This is a popular estimation method which minimizes the sum of squared residuals. 
+(Wooldridge 2010, p. 27-35, 843)
+#>
+
+The regression formula we use in the following: 
+
+**<span class="math">$$Husbandry_j = \alpha + \beta TSI_j + \epsilon$$</span>**
+
+The index $_j$ identifies one of the 522 ethnic groups contained in the dataset. Remember, each row of our dataset describes another ethnic group inside Africa.
+$\epsilon$ is the error term it contains all unobserved factors that effects the probability that a group relied on husbandry beside the TseTse fly (Wooldridge 2013, p. 21).
+
+The R command we use here is <span style="color:mediumvioletred">lm()</span> which stands for "linear model". For more information right click [here](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/lm.html) and open a new tab. We pass the function the dependent variable <span style="color:mediumvioletred">husbandry</span> and the independent variable <span style="color:mediumvioletred">TSI</span> separated by <span style="color:mediumvioletred">~</span>. The argument *data* specifies the dataset the previous variables come from. Alternatively, we could also address the variables with <span style="color:mediumvioletred">pre$...</span> .
+With the command <span style="color:mediumvioletred">summary(name of the regression)</span> we print out the regression result.
+
+To solve the task you first have to remove the <span style="color:mediumvioletred">#</span> and then replace the <span style="color:mediumvioletred">???</span> with the right code elements.
+```{r "4 b) "}
+#< task_notest
+# computing regression
+# linreg_husbandry = ??(???????? ~ ???, data=pre)
+
+# printing out the regression coefficients
+# ???????(linreg_husbandry)
+#>
+linreg_husbandry = lm(husbandry ~ TSI, data=pre)
+summary(linreg_husbandry)
+```
+
+#< award "First regression"
+Nice going!  
+You produced your first OLS regression. Regressions are a widely-used method in econometrics to analyze correlation. Hence it is important to understand the basics.
+#>
+   
+#### Interpretation of the regression output:
+
+The output tells us the linear model looks like this:
+
+**<span class="math">$$\widehat{Husbandry_j} = 2.39543 - 0.81172 * TSI_j$$</span>**
+
+The important value here is the estimated value of $\beta$ which is roughly - 0.81. We can interpret the regression coefficient here as followed: A one standard deviation growth (remember: The TSI is standardized so the standard deviation is one.) in the TSI variable decreases the probability that an ethnic group relies on <span style="color:mediumvioletred">husbandry</span> by nearly one category.
+
+#< info "Interpretation of regressions with ordinary variables"
+An ordinary variable is defined so that we can interpret the order, but not the distance in between.  
+For example, the variable husbandry of the dataset <span style="color:mediumvioletred">precolonial</span>. We know that a higher value implicates a higher dependence on livestock farming, but we cannot say anything about how much the group's subsistence strategy changes with an increase or decrease of the TSI because the magnitude is not uniform (Wooldridge 2010, p. 848).
+This makes it hard for us to interpret the regression. We could use a different model called Logit. But in our case we do not need an exact interpretation we just want to get a rough tendency. Hence at this stage we stay with the OLS model.
+#>
+
+#< info "Correlation vs. causality"
+Correlation does not imply causality that is an important thing you should always keep in mind. We speak of correlation if we observe a statistical relationship for example measured by a regression.  
+
+In contrast causality implies that one variable directly influences the outcome of the other variable. So, the outcome of the first is completely or partly responsible for the second. It is not possible to prove a causal relationship with just running a regression. 
+
+Also it is not sufficient to find a correlation and conclude that there is a causal relationship. It does not say anything about the direction of the causality or other unobserved factors that influence explained and explaining variable. Although we have statistical software that can handle a huge amount of data and calculate complex formulas in just a second there is no alternative to critical and logical thinking!
+
+The graphs on this [website](http://www.tylervigen.com/spurious-correlations) make clear the conflict between correlation and causality in a hilarious way. They show the correlation and statistical measurements between two variables. But if we think about both outcomes logically, we will agree that there cannot be causal relationship. Have a look if you like!
+#>
+
+After interpreting the coefficients, we now want to have a closer look at the other statistical values returned by the <span style="color:mediumvioletred">summary</span> command.
+The *** behind the regression result tells us that it is significant at the 1 percent level. 
+The p-value in this regression is $2.2*10^{16}$ which means very small. 
+
+#< info "Significance level and p value"
+The significance level describes the probability of a Type I error. The Type I error is the mistakenly rejection of the null hypothesis when in fact it is true.  
+
+The p-value describes the lowest significance level on which the null hypothesis can be rejected. The p-value expresses a probability so it is always between 0 and 1.
+
+In economic papers the significance level is often coded with one to three stars. In simple terms many stars after the regression coefficient stand for a low significance level, so the probability to reject a true null hypothesis is small and this implies that the coefficient is highly significant and we can interpret the correlation.
+
+(Wooldridge 2010, p. 123-126, 133-134, 846)
+#>
+
+#### Scatterplot
+As a next step, we want to plot our regression results with a scatterplot. The command we use is <span style="color:mediumvioletred">plot()</span>. The first variable we pass the command will be plotted on the x axis, the second one on the y axis. We analyze the effect of <span style="color:mediumvioletred">TSI</span> on <span style="color:mediumvioletred">husbandry</span>, so which variable belongs to which axis? Pass the variables to the right axis in the code chunk below.  
+Also we plot the fitted line suggested by the OLS estimate in red color. The right command here is <span style="color:mediumvioletred">abline(name of the regression, col = " ")</span>. 
+
+```{r "4 c) "}
+#< task_notest
+# plotting the data
+# plot(pre$???, pre$???, main = "Scatterplot TSI and husbandry")
+# abline(linreg_husbandry, col="red")
+#>
+plot(pre$TSI, pre$husbandry, main = "Scatterplot TSI and husbandry")
+abline(linreg_husbandry, col="red")
+```
+
+So how to interpret the scatter plot?   
+Each dot stands for one ethnic group. The position of the dots describes the dependence on husbandry and the TseTse suitability. The x axis refers to the TSI so a dot that is far on the right side describes a group living in an area with high TseTse suitability. The y axis is related to husbandry this means a group which relies to a big part on husbandry as a subsistence strategy is described with a high dot.
+Beside the dots there is also a line which codes the correlation between husbandry and TSI we calculated in the regression before. It is a falling line, because we found a negative $\beta$.
+
+So how can we explain the negative correlation between TSI and husbandry?  
+The TseTse fly transmits the sleeping sickness to the livestock of a group. Hence in areas with a high suitability for the fly there is a higher chance that farm animals get infected with the sleeping sickness and die. Consequently, animal husbandry is not an effective way to feed the group and will not be chosen.
+
+But we should be careful with interpreting the results of the simple linear regression. We do not know if the error term $\epsilon$ contains any relevant variables that influence the outcome and are correlated with the TSI. These are so called *omitted variables* and they would bias our estimate. More details in the info box below. We will take this into consideration in the following exercise and compute a so called multiple regression.
+
+#< info "Error term"
+The variable called error term or disturbance is part of a regression and comprises all factors - apart from the explanatory variable - which we cannot observe, but that affects the predicted variable. We can add additional variables to the regression to minimize the error term, but we cannot eliminate it completely. Normally we find the error term at the end of the regression formula coded as $\epsilon$ or u.
+
+(Wooldridge 2010, p. 4-5, 23, 838)
+#>
+
+### Multiple Regression
+
+To find out more about multiple regressions in general, please open the info block.
+
+#< info "Multiple Regression"
+A regression is called **multiple regression** if the response variable is a function of **several** control variables and an error term. Therefore, we can control for additional factors that influence the dependent variable, draw better ceteris paribus conclusions and allow for a higher flexibility.
+
+(Wooldridge 2010, p. 68, 842)
+#>
+
+What other factors can we think of that might influence the dependency on <span style="color:mediumvioletred">husbandry</span>? For example, we can think of climate factors like temperature, humidity, or the access to a river.
+
+#### Control variables
+
+What do we want to measure with our regression?  
+The effect of TSI on <span style="color:mediumvioletred">husbandry</span>.
+  
+Below we see the relationship between <span style="color:mediumvioletred">TSI</span> and <span style="color:mediumvioletred">husbandry</span> together with the control variable <span style="color:mediumvioletred">prop_tropics</span> which measures the proportion of land area in the tropics for each ethnic group. This graphic visualizes the characteristic of a control variable.  
+   
+   
+<img src="figure/pfeil1.png" style="width: 50%; height: 50%">  
+   
+*Figure 2: Arrow diagram - Relationship between TSI and husbandry together with a control variable*,  
+*Source: own diagram*    
+       
+A short explanation to the figure:  
+  
+The boxes stand for the variables in the regression the arrows represent the effect one variable has on another. Remember, the aim of our regression is to measure the effect TSI has on <span style="color:mediumvioletred">husbandry</span>. But if we just compute a linear regression between these two, we will ignore the effect the tropics - measured by the variable <span style="color:mediumvioletred">prop_tropics</span> - has on both variables, TSI and <span style="color:mediumvioletred">husbandry</span>. This is called an omitted variable bias. To avoid the bias, we include <span style="color:mediumvioletred">prop_tropics</span> as a control variable. By doing so we detangle the effects the tropical conditions have on the regression and can separately measure the effect of <span style="color:mediumvioletred">prop_tropics</span> on <span style="color:mediumvioletred">husbandry</span> and even more important the effect of TSI on <span style="color:mediumvioletred">husbandry</span>. 
+
+#< info "Omitted variable bias"
+The bias is also known as statistical error.
+It is the difference between the expected value of an estimator and the true underlying parameter that the estimator is supposed to measure.
+(Wooldridge 2010, p. 835)
+
+Let us make clear the omitted variable bias on the example of our regression model:
+
+**<span class="math">$$husbandry_j = \alpha + \beta_1 TSI_j + \beta_2 proptropics_j + \epsilon_j$$</span>**
+
+<span style="color:mediumvioletred">prop_tropics</span> is in our case the variable we omitted first while calculating the linear regression which led to a bias.
+  
+  
+But how to determine the sign of the bias?   
+    
+Here a useful formula:
+  
+The bias of $\beta_1$ when $x_2$ (In our example: <span style="color:mediumvioletred">prop_tropics</span>) is the omitted variable:
+
+**<span class="math">$$sign(Bias(\beta_1)) = sign(\beta_2) * sign(correlation(TSI, prop-tropics))$$</span>**
+
+In this case $\beta_2$ is negative the correlation of TSI and <span style="color:mediumvioletred">prop_tropics</span> is positive. The result is a negative bias of $\beta_1$
+
+(Wooldridge 2010, p. 89-94)
+#>
+
+In the following we want to add some meaningful control variables and analyze how they affect the correlation between TSI and <span style="color:mediumvioletred">husbandry</span>. To make it more interesting, you can have a guess before about how the regression coefficient will change.  
+    
+   
+   
+#< quiz "correlations"
+question: Have a guess! Which sign has the correlation between <span style="color:mediumvioletred">prop_tropics</span> and TSI respectively <span style="color:mediumvioletred">husbandry</span>? If you are unsure, open the info-block above.
+sc:
+  - the correlation between prop_tropics and TSI is positive, between prop_tropics and husbandry negative*
+  - the correlation between prop_tropics and TSI is negative, between prop_tropics and husbandry positive
+  - both correlations are positive
+  - both correlations are negative
+success: Great, your answer is correct!
+failure: Try again.
+#>
+  
+  
+   
+To test your answer, let us compute the correlations. Therefor just click edit and check afterwards.
+```{r "4 d) "}
+#< task
+cor(pre$TSI, pre$prop_tropics)
+cor(pre$husbandry, pre$prop_tropics)
+#>
+```
+
+We see that the TSI is positively correlated with the tropics. This result is obvious and easy to explain because the sleeping sickness is a tropical disease. The TSI is computed with climate data which model the suitability for the TseTse. The fly prefers high humidity and a constant temperature around 25 °C. These ideal conditions match best the values found in the tropics. So if a high land ratio of the country lies in the tropics, there will be more Tsetse flies and a higher possibility of the sleeping sickness.
+
+The negative correlation between <span style="color:mediumvioletred">husbandry</span> and the tropics is not as easy to explain. We do not have enough background information to give a precise explanation why we observe this we can just guess. 
+Maybe the areas in the tropics were not as suitable for <span style="color:mediumvioletred">husbandry</span> because of the climate conditions.
+Or the groups living in the tropics relied mainly on other subsistence strategies like <span style="color:mediumvioletred">hunting</span> because they were more effective. Another reason might be that other tropical animal diseases are prevalent.
+   
+   
+#< quiz "climate control"
+question: Now, let us take a step further and make it a little bit more complicated. How will the correlation between TSI and <span style="color:mediumvioletred">husbandry</span> change if we add the variable <span style="color:mediumvioletred">prop_tropics</span> from the climate cluster to the regression?
+sc:
+  - the correlation will get weaker
+  - the correlation will get stronger*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+   
+   
+Let us now test your answer and compute the regression with the proportion of land area in the tropics to check how the regression output changes.
+```{r "4 e) "}
+#< task
+reg_husbandry_cc = lm(husbandry ~ TSI + prop_tropics, data = pre)
+summary(reg_husbandry_cc)
+
+# Print out the regression coefficients of linear regression calculated in an earlier task to compare.
+coef(linreg_husbandry)
+#>
+```
+
+If we control for the tropics, the effect of TSI on <span style="color:mediumvioletred">husbandry</span> gets stronger (Do not get confused. The coefficient $\beta$ gets smaller/more negative). The coefficient changes because of the underlying correlations between the tropics and TSI respectively <span style="color:mediumvioletred">husbandry</span> we discussed beforehand. 
+
+So much for the effect of the tropics. In a next step, we will add the dummy variable <span style="color:mediumvioletred">river</span> which indicates if there was a river in the area of the ethnic population. Once again you can have a guess before we calculate the change in the regression coefficient after adding the new control variable.
+
+#< info "Dummy variable" 
+A dummy variable or binary variable only takes two values, zero and one. The variable is artificial and represents if a phenomenon occurred or not. In an OLS regression they can be used like any other variable.
+(Kennedy 2013, p. 232)
+#>
+   
+   
+#< quiz "river control"
+question: How will the correlation between TSI and <span style="color:mediumvioletred">husbandry</span> change if we add the variable <span style="color:mediumvioletred">river</span>?
+sc:
+  - the correlation will get stronger*
+  - the correlation will get weaker
+success: Great, your answer is correct!
+failure: Try again.
+#>
+   
+   
+Now it is your turn. Add the control variable <span style="color:mediumvioletred">river</span> to the multiple regression. 
+```{r "4 f) "}
+#< task_notest
+# reg_husbandry_gc = lm(??? ~ ??? + ???_??? + ???, data = pre)
+# summary(reg_husbandry_gc)
+
+# to compare with the regression before, where prop_tropics was the only control variable
+# coef(reg_husbandry_cc)
+#>
+reg_husbandry_gc = lm(husbandry ~ TSI + prop_tropics + river, data = pre)
+summary(reg_husbandry_gc)
+coef(reg_husbandry_cc)
+```
+
+Like before when adding <span style="color:mediumvioletred">prop_tropics</span> we do not know exactly why the correlation changes the way it does when adding the control variable. But let us think of a plausible connection.  
+
+The TseTse is dependent on access to water for living and reproduction (Laveissière et al. 2011). 
+Because of that we observe a positive correlation between <span style="color:mediumvioletred">river</span> and TSI.   
+
+Husbandry is also known to be a water intensive subsistence strategy.
+Consequently, our first assumption might be that <span style="color:mediumvioletred">river</span> and <span style="color:mediumvioletred">husbandry</span> are positive correlated. But in our case the variables <span style="color:mediumvioletred">river</span> and <span style="color:mediumvioletred">husbandry</span> are negatively correlated. This example should strengthen our awareness that in some cases relationships are not that easy to guess and it needs further research to find out the reason for the measured relationship. Maybe the groups near a river relied stronger on fishing and because of that we observe a negative bias and $\beta_1$ gets more negative. 
+
+In the following we want to include additional control variables. Therefore, we first have to discuss which variables are suggestive to add.
+   
+   
+#### Channel and proxy variables
+
+In this chapter, we aim to investigate the characteristics of proxy and channel variables and how to include them in a regression.  
+  
+In our dataset sleeping sickness is a so-called **channel variable**. Because there is no data available on the historical prevalane of the sleeping sickness we cannot include it in our model. To still investigate the effect of the sleeping sickness the the author developed a so-called **proxy variable** - in our case TSI - instead. (For more information about the approach to create the TSI have a look at exercise 2). A proxy variable is correlated with the channel variable. Remember, in our case the TSI measures the distribution of the TseTse fly which acts as the vector for the sleeping sickness. Because of this natural symbiosis both variables are related.
+(Kennedy 2013, p. 3, 158; Wooldridge 2013, p. 298-299)
+
+#< info "Differences malaria and sleeping sickness " 
+Malaria is also a tropical, parasitic disease occurring in regions near the equator. But, there are several big differences to the sleeping sickness.   
+First, not the TseTse but the Anopheles mosquito transmits the parasite.  
+Second, the effect of Malaria on development is mainly through the infection of humans not animals.
+(Gollin and Zimmermann 2007, p. 1-6, 22-24)   
+In our problem set the variable <span style="color:mediumvioletred">malaria</span> measures the prevalence of the disease.
+#>
+   
+In the following we will ignore the fact that there is no variable which measures directly the distribution of sleeping sickness and through this learn more about how to include channel variables in a regression.
+    
+    
+#< quiz "including sleeping sickness"
+question: We do not have a variable directly measuring the historical prevalence of the sleeping sickness. But if we would, should we included it as a control variable in the regression of TSI on <span style="color:mediumvioletred">husbandry</span>? Should we include <span style="color:mediumvioletred">malaria</span> instead or add both variables?
+sc:
+  - include malaria as a control variable*
+  - include sleeping sickness as a control variable
+  - include both variables as control variables
+  - include none variable as a control variable
+success: Great, your answer is correct!
+failure: Try again.
+#>
+   
+   
+Let us explain this in more detail with the graphic below which describes the relationship between TSI and the channel variable sleeping sickness together with the control variables.
+   
+   
+<img src="figure/pfeil2.png" style="width: 70%; height: 70%">  
+   
+*Figure 3: Arrow diagram: Relationship between TSI and the channel variable sleeping sickness together with the control variables*,   
+*Source: own diagram*  
+
+How to explain the figure above?   
+  
+The regression measures the effect of TSI on <span style="color:mediumvioletred">husbandry</span>. In the right corner the geographic control variables that influence all other variables are pictured. They are included in the regression to separately measure the effect TSI has on <span style="color:mediumvioletred">husbandry</span>. TSI is the proxy variable to estimate the prevalence of the sleeping sickness. If we would have exact data on the historical distribution of sleeping sickness - what we do not have - we could use this to predict the development variables. But there is no point in including a control variable measuring the historical sleeping sickness in the regression. This would falsify the regression result between TSI and <span style="color:mediumvioletred">husbandry</span> because the effect of the fly is through transmitting the sleeping sickness.  
+
+In contrast the variable <span style="color:mediumvioletred">malaria</span> is not correlated with TSI because another fly is the vector for this disease. <span style="color:mediumvioletred">Malaria</span> is related with the same geographical control variables as the sleeping sickness. The disease has no direct impact on livestock farming, because it does not infect cattle. (A detailed discussion of the control variables is given in the chapter below.) 
+  
+#### Adding all meaningful control variables
+
+After we discussed which variables to include as a control variable in the regression we now want to discuss the mathematic formula and give a short description of all used control variables.
+    
+    
+**The mathematic formula of the multiple regression:**
+
+**<span class="math">$$Husbandry_j = \alpha + \delta TSI_j + X'_j + \epsilon_j$$</span>**
+     
+     
+Most variables are equal to the linear regression we discussed before.
+The new term in this equation is $X'_j$. It contains plausibly exogenous control variables. 
+The control variables we use here can be clustered in four groups:
+     
+  - **Climate controls**: <span style="color:mediumvioletred">prop_tropics, meantemp, meanrh, itx</span>
+  - **Malaria controls**: <span style="color:mediumvioletred">malaria</span>
+  - **Waterway controls**: <span style="color:mediumvioletred">coast, river</span> 
+  - **Geography controls**: <span style="color:mediumvioletred">lon, abslat, meanalt, SI</span>
+     
+     
+In order to get a detailed explanation of every control variable have a look in the info box.
+
+#< info "Description of the control variables" 
+- <span style="color:mediumvioletred">prop_tropics</span>: The variable describes the proportion of land area in the tropics. It ranges from 0 to 1. 
+- <span style="color:mediumvioletred">meantemp</span>: The average temperature.  
+- <span style="color:mediumvioletred">meanrh</span>: The average relative humidity. 
+- <span style="color:mediumvioletred">itx</span>: The first-order interaction between temperature and humidity.  
+- <span style="color:mediumvioletred">malaria</span>: An index called malaria ecology index. It approximates the predominance of serious malaria forms. The index is in contrast to the TSI not standardized. It only measures the biting of humans, not animals.    
+- <span style="color:mediumvioletred">coast</span>: A dummy variable equals 0 if the boundaries did not include a coast, 1 if they did.  
+- <span style="color:mediumvioletred">river</span>: A dummy variable measuring if there was a river located inside the group boundaries. Equals 1 if there was a river, 0 if not.  
+- <span style="color:mediumvioletred">lon</span>: The longitude. A geographical coordinate which defines the east-west position of the group on the surface of the earth.  
+- <span style="color:mediumvioletred">abslat</span>: The absolute latitude. A geographical coordinate which defines the north-south position of the ethnic population on the surface of the earth.  
+- <span style="color:mediumvioletred">meanalt</span>: The mean altitude. Measuring the height above the sea level in kilometers.    
+- <span style="color:mediumvioletred">SI</span>: FAO's agricultural suitability index. Measures the suitability of the soil for rainfed farming. The index is normalized and ranges from 0 to 1. A higher value means that the area the group lived in was very suitable for agriculture.  
+#>
+   
+   
+For the next step, I already added all remaining variables for climate, malaria, geographic and waterways. Just press <span style="color:mediumvioletred">check</span> to compute the multiple regression and consequently show the coefficients.
+
+```{r "4 g) "}
+#< task
+
+reg_husbandry_c = lm(husbandry ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI , data = pre)
+
+summary(reg_husbandry_c)
+#>
+```
+   
+Now we see the whole picture. The first column lists all control variables. Accordingly, we see which variable is positively or negatively correlated with husbandry. The explanatory variable TSI is still significant and shows a negative effect on livestock farming.
+But be careful there are a lot more factors that influence <span style="color:mediumvioletred">husbandry</span>. However, we cannot measure them or have no data. Hence the regression result is only an approximation and no exact value.  
+In the next exercise 4.2 we get to know methods to further optimize our regression.
+  
+#### Visualization of the regression results with effectplot()
+
+At the end of this exercise we display the regression results. Therefor we use the function <span style="color:mediumvioletred">effectplot()</span> from the package <span style="color:mediumvioletred">regtools</span> (Kranz 2016). The command is helpful to visualize and compare the effects a normalized change in the independent variables has on the dependent variable. It tells us which explanatory variable shows a big impact on <span style="color:mediumvioletred">husbandry</span> and which other control variables only show a small one.   
+   
+Now it is your turn to apply the function <span style="color:mediumvioletred">effectplot()</span> on the multiple regression. Please, do not forget to remove the <span style="color:mediumvioletred">#</span> to load the package.
+
+```{r "4 h)"}
+#< task_notest
+# library(regtools)
+#>
+library(regtools)
+effectplot(reg_husbandry_c)
+```
+
+#< award "Visualization of regression results"
+Great! The code you programmed produces an output that visualize the regression output in an elegant way. Visualization is important to understand and communicate the results.
+#>
+
+When looking at the effectplot we see on the left the names of the independent variables. The length and color of the bars tells us more about the size and direction of the effect on <span style="color:mediumvioletred">husbandry</span>. We can see at one glance if the correlation is positive (blue) or negative (red). The explanatory variables are ordered in ascending order according to their effect size. For dummy variables like <span style="color:mediumvioletred">coast</span> or <span style="color:mediumvioletred">river</span> the numbers written in the vertical bars describe the effect from a change from 0 to 1.
+We observe that TSI is in the middle of the effect sizes and has a negative impact. The variables controlling for climate show a huge correlation whereas for example the malaria index or the proportion of land area in the tropics are negligible.   
+Earlier we discussed which characteristic of the tropics influence <span style="color:mediumvioletred">husbandry</span>. Now we got the answer. The effect of the tropics on <span style="color:mediumvioletred">husbandry</span> is through the climate control variables. While controlling for climate the impact of the tropics equals zero whereas the climate controls show a high correlation.
+  
+  
+*This exercise refers to page 6 - 7 and 14 - 15 of the paper.*
+ 
+## Exercise 4.2 -- Correlation between subsistence strategies and the TSI: Clustered robust standard errors
+
+In this chapter we want to work further on the multiple regression so that the applied method fits even better to the given data.
+   
+What are clustered standard errors? To find out, please open the info block below.
+
+#< info "Clustered robust standard errors" 
+**Clustering** means to separate the dataset in smaller subsets. In our case, we cluster the ethnic groups regarding their cultural relatedness. The clustering of the data enables us to compute standard errors and test statistics which are robust to serial correlation (Wooldridge 2013, p. 839).
+
+In our context, serial correlation implies that groups from the adjacent cultural provinces are more likely to rely on similar subsistence strategies. This is an endogeneity problem. While computing the regression we have to control for this correlation by modifying the standard errors which mostly grow larger (Wooldridge 2013, p. 417-420).
+
+**Robust** determines that the standard errors of the OLS regression are adjusted to control for heteroskedasticity. Heteroskedasticity means that the variance is not constant.
+(Wooldridge 2010, p. 264-269)
+
+The coefficients do not change when we use this method, just the standard errors differ.
+#>
+
+First let us load the data.
+
+```{r "4 h) "}
+
+#< task
+pre = read.dta("precolonial.dta")
+#>
+```
+As a next step, we modify the standard errors of the regression. In the regression above we treated every group as an independent observation. But that is not the whole story. Groups that have a similar cultural ancestry correspond in used subsistence strategies. For example, nomadic groups will more likely rely on hunting and husbandry instead of agriculture. Like the Masai where <span style="color:mediumvioletred">husbandry</span> = 9 and <span style="color:mediumvioletred">agriculture</span> = 0. These groups developed technologies and habits through the years that will not change easily. 
+Hence in the following we cluster the robust standard errors at the level of provinces. 
+
+#< info "Commands length() and unique()" 
+The command <span style="color:mediumvioletred">length()</span> gives back the length of an object. 
+<span style="color:mediumvioletred">unique()</span> returns the object but removes the duplicates. 
+#>
+
+So how many clusters are calculated? Run the code below and find out.
+```{r "4 i) "}
+#< task
+length(unique(pre$province))
+#>
+```
+The result is 44 clusters.
+
+In the following tasks, we load a package called <span style="color:mediumvioletred">lfe</span>. This package allows us to compute regressions with clustered standard errors very short and elegant. There are also many other possibilities to get the clustered standard errors like calculating a cluster-robust variance-covariance matrix and then perform a t-test of the estimated coefficients but the R code is a lot longer.
+
+#< info "lfe package" 
+The name of the package is short for linear group fixed effects. This package is very useful to calculate regressions with clustered standard errors and fixed effects.
+In this problem set we will mainly use the command <span style="color:mediumvioletred">felm()</span>.
+#>
+
+In the following task, we use the function <span style="color:mediumvioletred">felm()</span> of the above-mentioned package.
+
+The command consists of 4 parts. In the first part, we fill in our regression formula. Part two is to define fixed effects. We will not use this now but in a later exercise. Part three is not relevant for us so we just write 0. Part four specifies the cluster for the standard errors.  
+
+Now it is your turn. Complete the regression equation with husbandry as the dependent variable and TSI as independent together with the control variable and the province clusters. Remember to remove the <span style="color:mediumvioletred">###</span>.
+
+```{r "4 j) "}
+#< task_notest
+# loading the package
+# library(lfe)
+
+# computing the regression
+# reg_husbandry_clus = felm(??? ~ ??? + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | ??? | ??? | ??? , data = pre)
+
+# printing out the regression
+# summary(reg_husbandry_clus)
+#>
+
+library(lfe)
+reg_husbandry_clus = felm(husbandry ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+summary(reg_husbandry_clus)
+
+```
+
+#< award "Clustered standard errors"
+Well done! You performed a regression with modified standard errors to consider for spatial relation.
+#>
+
+We see that the standard errors got larger when clustering the dataset instead of just using the usual OLS standard errors. This occurs because the errors are positively serially correlated. So, the real uncertainty of the OLS standard errors is underestimated by the parameter estimates. (Wooldridge 2013, p. 419, 425)
+
+### Analyzing all Subsistence strategies
+
+Of course there are more subsistence strategies then just animal husbandry. To get the whole picture we analyze also the effect of TseTse on <span style="color:mediumvioletred">hunting, gathering, agriculture</span> and <span style="color:mediumvioletred">fishing</span>. The formula is as followed: 
+
+#### Regression equation (1):
+
+**<span class="math">$$Outcome_j = \alpha + \delta TSI_j + X'_j \Omega + \epsilon_j$$</span>**
+  
+The dependent variable $Outcome_j$ is one of the subsistence strategies we want to relate to the TSI. Once again we use a same multiple regression with clustered standard errors like before. 
+
+```{r "4 k) "}
+
+#< task
+reg_hunting_clus = felm(hunting ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+
+reg_gathering_clus = felm(gathering ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+
+reg_agriculture_clus = felm(agriculture ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+
+reg_fishing_clus = felm(fishing ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+#>
+```
+  
+After we computed the regression we want to print out the results.
+For presenting the results we use the function <span style="color:mediumvioletred">stargazer</span> from the same named package. 
+First, we pass the regressions calculated above to the function. Second, we define the type as html which determines the type of produced output. In a last step we specify the variable which determines the heading of the output. 
+
+#< quiz "subsistence strategies"
+question: Have a guess before we see the result. Which of the following subsistence strategies are correlated with the TSI?
+mc:
+  - husbandry*
+  - hunting*
+  - gathering*
+  - agriculture
+  - fishing
+success: Great, all answers are correct!
+failure: Not all answers correct. Try again.
+#>
+   
+Let us test your answer and print out the regression coefficents. Just click check.    
+```{r "4 l)", results= 'asis'}
+
+#< task
+library(stargazer)
+
+stargazer(reg_husbandry_clus , reg_hunting_clus , reg_gathering_clus , reg_agriculture_clus , reg_fishing_clus , type = "html", title = "Relationship between TSI and subsistence patterns" , column.sep.width = "10pt")
+#>
+```
+
+### Interpretation of the regression output
+
+Let us describe and analyze the regression results now in detail. 
+
+The regressions indicate that the TseTse fly had a significant impact on some of the food production strategies.
+We observe that a one standard deviation raise in TSI is related to a statistically significant increase in <span style="color:mediumvioletred">hunting</span> and <span style="color:mediumvioletred">gathering</span> and a decline in <span style="color:mediumvioletred">husbandry</span>. The author suggests that hunting and gathering are both food production technics which complement each other. Ethnic groups with a high TseTse suitability index relied on hunting and gathering since both are easy to combine because they regard the same spatial flexibility. The negative effect on husbandry can be explained because the TseTse bites mostly animals. Livestock has a higher risk to get infected then wildlife and so husbandry in this region was not very effective.    
+  
+We do not find a significant correlation between TSI and <span style="color:mediumvioletred">agriculture</span>. The author assumes that the TSI influenced mainly the way groups farmed. She states that groups with high TSI values relied on forms of slash and burn agriculture whereas groups outside of the TSI infected areas did intensive farming. In exercise 5 we will look at development variables in detail and get a better understanding of how TseTse influenced the way a group performed agriculture.   
+  
+<span style="color:mediumvioletred">Fishing</span> is also not correlated with TSI. For fishing a group needs access to the sea, a lake, or a river. Hence the access to waters and not the TseTse defines if a group can perform fishing. It is reassuring that we find a significant correlation of fishing with coast and river in the regression output.
+
+### The Influence of Malaria on the subsistence strategy
+
+The author repeats the regressions with the <span style="color:mediumvioletred">malaria</span> index. So, we can compare the correlation between malaria and the selected food production strategy with the significant results we found for the TSI. 
+
+#< info "Malaria ecological index" 
+The malaria ecological index approximates the distribution of the tropical disease. It is based on a formula which involves the number of humans the mosquito bites per day, the death rate of the fly per day and the amount of mosquitos in a certain area which recently feed on humans. Mortality of the fly is calculated similar to the TseTse one with help of climate data. Kiszewski and Sachs (2004) collected the necessary parameters in field studies. 
+#>
+
+#< quiz "malaria impact"
+question: Have a guess! Is the malaria index significantly correlated with the subsistence strategy of an ethnic group?
+sc:
+    - yes
+    - no*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+  
+To test if your answer is correct, we compute the multiple regressions with <span style="color:mediumvioletred">malaria</span> as a dependent variable and the subsistence strategies as independent variables.
+```{r "4 m)"}
+
+#< task
+
+reg_husbandry_m = felm(husbandry ~ malaria + prop_tropics + meantemp + meanrh + itx + TSI + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+
+reg_hunting_m = felm(hunting ~ malaria + prop_tropics + meantemp + meanrh + itx + TSI + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+
+reg_gathering_m = felm(gathering ~ malaria + prop_tropics + meantemp + meanrh + itx + TSI + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+
+reg_fishing_m = felm(fishing ~ malaria + prop_tropics + meantemp + meanrh + itx + TSI + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+
+reg_agriculture_m = felm(agriculture ~ malaria + prop_tropics + meantemp + meanrh + itx + TSI + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data=pre)
+
+#>
+```
+  
+Printing the results. This time it is your turn to nicely display the regression results with <span style="color:mediumvioletred">stargazer</span>. If you get confused, just adapt the code from the task before.
+  
+```{r "4 n)", results= 'asis'}
+#< task
+# ???(reg_husbandry_m , reg_h??_m , reg_g??_m , reg_f???_m , reg_a???_m , type = "html" , title = "Relationship between malaria and subsistence patterns")
+#>
+stargazer(reg_husbandry_m , reg_hunting_m , reg_gathering_m , reg_fishing_m , reg_agriculture_m , type = "html" , title = "Relationship between malaria and subsistence patterns")
+```
+
+#< award "Stargazer"
+Bravo! You successfully used the package stargazer to print out the regression results in a nice way that is easy to read.
+#>
+
+This fits to our theory that the Tsetse played a special role in the African development. Both are tropical diseases transmitted by flies, but malaria in contract to the sleeping sickness did not infect the livestock as much. 
+   
+   
+*This exercise refers to page 6 - 7 and 14 - 15 of the paper.*
+
+## Exercise 5 -- Regression: Correlation between development variables and the TSI 
+
+In this exercise, we want to find out: Is there a connection between the TseTse population and variables measuring indicators of development? In the last exercise, we got an overview of the impact the TSI had on overall substance strategies. Now we want to go down one level and analyze special variables influencing the historical development.
+
+```{r "5 a)"}
+# loading the data
+#< task
+pre = read.dta("precolonial.dta")
+#>
+```
+
+We will discuss the development variables one after another when we interpret them. Nevertheless, the info box contains a short overview of all new variables.
+
+#< info "Relevant variables" 
+
+- <span style="color:mediumvioletred">animals</span>: dummy variable equals 1 if the ethnic group kept large domesticated animals like domestic castles, camelids, deer or equine, 0 if not.
+- <span style="color:mediumvioletred">intensive</span>: dummy variable, 1 if the group performed intensive or intensive irrigated farming, 0 if not.
+- <span style="color:mediumvioletred">plow</span>: dummy variable, 1 if the group used a plow for farming, 0 if not.
+- <span style="color:mediumvioletred">female_ag</span>: dummy variable, 1 if women did most of the agricultural tasks and 0 if not. 
+- <span style="color:mediumvioletred">ln_popd</span>ln_popd: the population density is calculated as log(residents per square kilometer).
+- <span style="color:mediumvioletred">slavery</span>: dummy variable, 1 for all forms of beginning or recorded slavery and slavery transmitted as a heritage to the next generation. 0 stands for no forms of slavery.
+- <span style="color:mediumvioletred">central</span>: dummy variable, 0 stands for groups who did not have a form of centralized state. 1 codes any other form like small chiefdoms, large and predominant chiefdoms, minor and large states. 
+
+#>
+   
+   
+### Multiple regression with clustered robust standard errors
+To analyze the correlation we compute multiple regressions with the TSI as independent variable and the development variables one after another as dependent variable. Like before we use robust clustered standard errors and the control variable discussed in the previous chapter: <span style="color:mediumvioletred">climate, malaria, waterway </span> and <span style="color:mediumvioletred"> geography</span>.
+
+Before we compute the regressions have a guess about selected correlations.
+  
+#< quiz "large domesticated animals"
+question: Is the regression coefficient between TSI and large domesticated <span style="color:mediumvioletred">animals</span> significant and if yes, does it show a positive or negative correlation?
+sc:
+    - not significant
+    - significant and positively correlated
+    - significant and negatively correlated*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+#< quiz "Intensive agriculture"
+question: Is the regression coefficient between TSI and <span style="color:mediumvioletred">intensive</span> agriculture significant and if yes, does it show a positive or negative correlation?
+sc:
+    - not significant
+    - significant and positively correlated
+    - significant and negatively correlated*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+#< quiz "Plow"
+question: Is the regression coefficient between TSI and <span style="color:mediumvioletred">plow</span> use significant and if yes, does it show a positive or negative correlation?
+sc:
+    - not significant
+    - significant and positively correlated
+    - significant and negatively correlated*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+To test your assumption we calculate the multiple regressions with TSI as a dependent variable and the development indicators as independent variables.
+```{r "5 b)"}
+
+#< task
+
+reg_animals = felm(animals ~ TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+
+reg_intensive = felm(intensive ~ TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+
+reg_plow = felm(plow ~ TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+
+reg_female = felm(female_ag~TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+
+reg_popd = felm(ln_popd ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria+ coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+
+reg_slavery = felm(slavery ~ TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt +SI | 0 | 0 | province , data = pre)
+
+reg_central = felm(central ~ TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre)
+#>
+```
+  
+After we computed the regressions we want to print out the results. Once again we use the package stargazer.
+```{r "5 c)", results= 'asis'}
+
+#< task
+stargazer(reg_animals , reg_intensive , reg_plow , reg_female , reg_popd , reg_slavery , reg_central, type = "html" , title = "Relationship between historical African development and TseTse suitability")
+#>
+```
+  
+### Interpretation of the regressions
+Now let us go over the regression coefficients one after another, describe and interpret the coefficients. Therefor we concentrate on the first row which refers to the TSI.
+
+A raise of one standard deviation in the TSI is related to a statistically significant fall of 23.1 % in the probability that the community kept large domesticated animals. Animals are infected with the sleeping sickness on a higher level than humans because of two reasons. First the fly prefers to sting animals over humans. Secondly there are more forms of the Trypanosomiasis that infect animals then humans.
+
+To make this percentage points comparable we calculate the <span style="color:mediumvioletred">mean()</span> of variable <span style="color:mediumvioletred">animals</span> and compare this with the regression coefficient.
+
+The dataset contains rows where the content is <span style="color:mediumvioletred">NA</span> this means for this ethnic group no value is available. To calculate the <span style="color:mediumvioletred">mean</span> we have to omit these variables first. The right R command here is <span style="color:mediumvioletred">na.omit()</span>. Insert the correct code below.    
+
+```{r "5 d)"}
+mean(na.omit(pre$animals))
+```
+
+#< quiz "percentage"
+question: How big is the correlation between TSI and the possession of large animals roughly expressed in parts of the sample mean?
+sc:
+  - 1/3*
+  - 1/4
+  - 1/10
+success: Great, your answer is correct!
+failure: Try again. Remember, the regression coefficent is - 0.231 and the mean is 0.626
+#>
+
+This is a quite high value and suggests that there is a big impact of TseTse on animal husbandry. 
+
+The next variable measures if the group **farmed intensively**. It is also a dummy variable. 1 describes groups that farmed intensively 0 stands for shifting agriculture or no agriculture at all. We observe a negative correlation between <span style="color:mediumvioletred">intensive agriculture</span> and the TSI. 
+A one standard deviation raise in the TseTse suitability index diminish the probability that they performed intensive agriculture by 9 % which is roughly one-third of the sample mean.
+
+The variable <span style="color:mediumvioletred">intensive agriculture</span> is argumentatively connected to the **possession of large animals**. A group with domesticated animals can use them to drag the plow. Also, the animal dung would be used as fertilizer. The access to fertilizer is important for repeated cultivation because otherwise the soil gets exhausted after several years and through the lack of nutrients farming is no longer possible. In this case it would be necessary to leave the soil fallow for several harvests and shift the agriculture during this time to another area.
+A second argument why the TseTse hindered intensive agriculture is that shifting agriculture is less labor-intensive then farming the same area several times. Hence it is also easier to do shifting agriculture if there are less large animals which power can be used. 
+
+To measure **historical population density**, we use the data from Murdock's map (1959). The variable which measures the inhabitants per square kilometer is log-transformed and negatively correlated with the TSI. But how to exactly interpret the effect of TSI on $log(population density)$? 
+To get an overview about how to interpret regressions with logs, have a look at the info box below. We observe the first scenario described in the info-block. So, a one standard deviation raise in TseTse suitability is related to a statistically significant decrease of approximately 75 % in population density. But in this case, we must be careful with the interpretation because it is a big change and so the value can only be viewed as a rough estimation.
+
+#< info "Interpreting regressions with log" 
+
+1. The dependent variable is log transformed: In this case, the outcome variable is log-transformed and the predicator variables are in their original metric. We interpret it as followed: A one unit increase in the independent variable changes the dependent variable by $100 * \beta$ percentage points.
+
+2. The independent variable is log transformed: Here the outcome variable is in its original metric the predicator variable is log transformed. We interpret: A one percentage increase in the dependent variable results in a $\beta / 100$ unit change in the independent variable.
+
+3. The dependent and independent variable are log transformed: A one percentage point change in the dependent variable is associated with a change of $100 * \beta$ percentage points in the independent variable.
+
+Note: The interpretation is only an approximation and does only hold for small changes in the variables.
+
+Why do we calculate regression with log-transformed variables?  
+There are many reasons to use the transformation with log.
+For example, to make the comparison with other regressions easier. Also, it is often used for fractions like in our case: $population/area$ because through this the interpretation of the distances is more intuitively. Another reason can be that the regression curve fits better and the residuals get smaller for the log-version. Also while using the log the range of the variable gets narrower which decreases the sensitivity for outliers.
+
+(Wooldridge 2010, p. 191)
+#>
+
+The next analyzed variable is **female participation in agriculture**. The variable is also a dummy variable that is 1 if women did most of the agricultural tasks and 0 if not. 
+
+#< quiz "female participation"
+question: Have a look at the regression output above. An increase of one standard deviation raises the probability that women participated in farming up to ...?
+sc:
+  - 21 %*
+  - 2.1 %
+  - 210 %
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+The author explains this connection with help of the theories developed by Boserup. In the regressions before we saw that the TseTse is negatively correlated with plow use and population density. Following the theory developed by Boserup this together with an easy access to land caused a division of labor. So, there are special tasks done by men like clearing the land and plowing and tasks done by women like caring for the subsistence crops. The low population density makes it necessary for both genders to participate in agriculture. (Beneria and Sen 1981)
+The researchers Alesina, Giuliano and Nunn (2013) even found out that there is a strong positive correlation between historical plow use and uneven gender roles. Men have more power in their upper-body which is necessary to use the plow by hand or control the harnessed animals. Soil preparation has a proportion of one third on all performed tasks in agriculture. Hence men had a comparative advantage in societies that performed intensive instead of shifting agriculture. Whereas women specialized on tasks done at home which led to a gender division. These gender norms did not disappear fast with the invention of new technology or that most of the economy today is not within agriculture. Instead even nowadays we observe that different societies have different imaginations about the role of women. This is an indicator that the TseTse did even have an indirect impact on culture though pre-colonial agriculture practices. 
+
+The dummy variable **central** is a simplification of the variable "jurisdictional hierarchy beyond the local authority" from the Ethnographic Atlas written by Murdock (1967). 0 stands for groups who do not have a form of centralized state. 1 codes any other form like small chiefdoms, large and predominant chiefdoms, minor and large states. 
+
+#< quiz "central"
+question: According to the regression coefficients below the regression between TSI and the variable central is ... correlated.
+sc:
+  - positively
+  - negatively*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+A raise of one standard deviation in the TSI has a negative effect of 7.5 percentage points on the possibility that an ethnic group was centralized. To find an explanation for this we can think about what conditions must be fulfilled that a chiefdom is build. 
+According to Bairoch (1988) there must be an agricultural surplus and a transportation network. In the previous regression analysis we saw that intensive agriculture and TSI are negatively correlated this indicates that the group got a lower farming output. A transportation network is easier to build if the group possesses large animals like horses or camels. But large animals and TSI are negatively correlated like we showed in the previous regression. We can summarize that the lack of a good transportation network and no large agricultural surplus to feed a ruling class hindered the centralization in TseTse infected regions.
+This connection is an important finding because political centralization before the colonialization is positively correlated with the development in nowadays Africa. 
+Another reason given by the authors is connected to the subsistence strategy. In the exercises before we found out that a high TSI is connected to a society relying on hunting and gathering. These forms of subsistence implicate that the group wandered without a permanent residence and all group members were involved in maintaining a livelihood. To avoid fights over material goods foraging groups separated in smaller subgroups without broad authority. This practice hindered centralization.
+(Gennaioli and Rainer 2007; Michalopoulos and Papaioannou 2013,2014)
+
+The dummy variable <span style="color:mediumvioletred">indigenous slavery</span> is coded 1 for all forms of beginning or recorded slavery and slavery transmitted as a heritage to the next generation. 0 stands for no forms of slavery. We observe a positive correlation between TSI and slavery. 
+
+#< quiz "slavery"
+question: Have a look in the regression output above. A one standard raise in the TSI is related to an elevation of ... percentage points in the possibility that a group living in Africa used forced labor.
+sc:
+  - 100
+  - 10*
+  - 1
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+An explanation for this empirical result is delivered by Nieboer (2013) and Domar (1970). They discovered that a low population density was historically positive correlated with slavery. In the regression before we found out that TSI and population density are negatively correlated. Glasgow (1963) assumed that the TSI had an indirect effect on slavery through the lack of large domesticated animals. The TseTse hindered groups to possess draft or pack animals to transport goods. Through this the groups had to perform transportation and farming tasks by humans. The scientist conjectured that this lack boosted the expansion of slave labor. A similar aspect is also discovered by Bonnassie (2009, p. 40). He found out that in Western Europe the technical change reduced the use of slaves. Because of technical adaption the animals could be used more efficiently and slave slavery got in comparison less attractive. 
+
+### Visualization of regression results
+
+After we computed and interpreted the regression results we now want to plot some of them. The package we use therefor is called <span style="color:mediumvioletred">effectplot</span>. It helps us to compare the effect a normalized change in the independent variables have on the dependent variable. We already used this in exercise 4.1. If you wish a detailed explanation please, have a look at the last task of this exercise. 
+I selected the regressions which investigate the correlation of TSI with <span style="color:mediumvioletred">slavery</span> and <span style="color:mediumvioletred">plow</span>. It is your turn to write down the right code to display the two <span style="color:mediumvioletred">effectplots</span> of the two regressions.
+
+```{r "5 e)"}
+
+effectplot(reg_plow)
+effectplot(reg_slavery)
+```
+
+
+#< quiz "effectplot"
+question: For which development variables do we find the highest correlation with TSI?
+sc:
+  - Plow use
+  - Slavery*
+success: Great, all answers are correct!
+failure: Not all answers correct. Try again.
+#>
+
+Are the signs of the coefficients and the order as we expected? 
+
+For <span style="color:mediumvioletred">slavery</span> we observe a high positive correlation with the variables <span style="color:mediumvioletred">TSI, absolute latitude</span> and <span style="color:mediumvioletred">river</span>. The correlation with the other variables - like <span style="color:mediumvioletred">climate variables</span> or <span style="color:mediumvioletred">malaria</span> -  is a lot lower. We already discussed the reasons for the high correlation with TSI in the previous exercise. The correlation with <span style="color:mediumvioletred">river</span> could be significant because slaves were used to transport goods. If the region has a river in its boundaries, this simplifies transport and slave labor might not be necessary any more.
+
+For the variable <span style="color:mediumvioletred">plow</span> we monitor a negative correlation with TSI like we discussed in previous exercise. But TSI is not the variable with the biggest magnitude. <span style="color:mediumvioletred">Climate variables</span> show a higher magnitude but they are not significant, so we refuse to interpret them.
+  
+  
+*This exercise refers to page 7 - 8 and 10 - 14 of the paper.*
+
+## Exercise 6 -- Placebo test: Correlation between TSI and development in the tropics outside Africa
+
+### Discussion of the new dataset placebo
+
+Till now we focused on analyzing the effect of TSI on the development inside Africa. Now we want to take a step further and analyze the impact of TSI in the tropics outside of Africa. This broader view is necessary to make sure that the TSI is measuring the effect of the sleeping sickness on African development and not only the connection between climate factors and farming. 
+
+Therefore, we load a new dataset called <span style="color:mediumvioletred">placebo</span>.
+
+```{r "6 a)"}
+#< task
+pla = read.dta("placebo.dta")
+#>
+```
+
+To get a first impression of the loaded data we print out some of the over 700 rows randomly. Therefore, we use the command <span style="color:mediumvioletred">sample_n(name of the data, sample size)</span> contained in the package <span style="color:mediumvioletred">dplyr</span>. The difference between <span style="color:mediumvioletred">sample_n()</span> and the <span style="color:mediumvioletred">head()</span> command we used in exercise 2 is that it does not necessary select the first six rows. This gives us a broader picture of the dataset especially if the data follows a specific order.  
+First, load the new package <span style="color:mediumvioletred">dplyr</span>. Second, use the command to display 6 rows of the dataset <span style="color:mediumvioletred">placebo</span>.
+
+```{r "6 b)"}
+
+library(dplyr)
+sample_n(pla , 6)
+```
+
+#< award "New command"
+Nice going! You learned a new command to randomly select rows of a dataset. It is important to get to know the data before we start analyzing it.
+#>
+
+Some of the variables in this dataset are equivalent to the one from the previous dataset <span style="color:mediumvioletred">precolonial</span>. The difference is that ethnic groups from outside Africa which lived in an area partly or completely inside the tropics are included whereas African groups which lived outside the tropics are removed. So, the data contains all groups in and outside Africa that lived entirely inside the Tropics of Capricorn and Cancer.
+
+The dataset also includes new variables which start with the prefix <span style="color:mediumvioletred">africa</span>. Through this the TSI and control variables for example for climate or malaria appear two times in the dataset. One time as a main effect and a second time with the prefix <span style="color:mediumvioletred">africa</span> as the interaction between the control variable and the binary variable Africa corresponding to $I_j^{Africa} X'_j T$ in the regression formula below. $I_j^{Africa}$ is a dummy variable which equals 1 for groups inside Africa and 0 for ethnic populations outside Africa.
+Hence the whole term $I_j^{Africa} X'_j T$ is zero for ethnic groups outside of Africa. Inside Africa it equals the value of the corresponding variable we know from <span style="color:mediumvioletred">precolonial.dta</span>.  
+
+Why the dataset is structured like this will get clear after we understand the concept behind the so-called placebo test.
+
+### Placebo test
+  
+#### Theoretical background
+  
+#< info "Placebo test" 
+In clinical trials placebo-controlled study is a common practice to test the effectiveness of a medical therapy.  
+Therefore, a group is separated into at least two subgroups. One group receives the treatment whereas the people in the control group just get a pseudo-treatment which is designed so that is has no real effect (for example a sugar pill). After the treatment, the two groups are compared to investigate the question: Is there a significant difference between the group treated with the real therapy compared to the placebo group?   
+ 
+Note: The test performed by the author is not completely comparable to the strict standards applied in medicine. Some assumptions are violated, for example that the groups are separated randomly. 
+#>
+
+The following test is called placebo test because the groups which lived in the tropics but outside Africa act as a placebo group. The groups living in the tropics inside Africa are comparable to the group receiving the real treatment.
+
+The structure of the placebo test is shown in the following regression formula:
+  
+  
+#### Equation (2):
+
+  **<span class="math">$$Outcome_j = \alpha + \beta TSI_j +\delta TSI_j I_j^{Africa} + X'_j \Sigma + I_j^{Africa} X'_j T + \gamma I_j^{Africa} + \epsilon_j$$</span>**
+  
+  
+  
+Remember:  
+$I_{j}^{Africa}$ is a binary variable that equals 1 if the ethnic group lived in Africa and 0 if not.  
+$X'_j$ contains the control variables for geography and climate.
+To understand equation (2) it is easiest to write it out for the groups inside and outside Africa:
+  
+- **Groups outside Africa: $I_{j}^{Africa}=0$:** $Outcome_j = \alpha + \beta TSI_j + X'_j \Omega +\epsilon_j$   
+The formula is equal to regression equation (1) we discussed in previous exercises.
+  
+  
+- **Groups inside Africa: $I_{j}^{Africa}=1$:** $Outcome_j = \alpha + \beta TSI_j +\delta TSI_j + X'_j \Omega +  X'_j T + \gamma I_j^{Africa} + \epsilon_j$  
+   
+   
+The important thing to understand about this regression formula is that $X'_j$ appears two times in the regression. So, we allow the ethnic groups inside Africa to differ in more characteristics then just the TSI from the groups outside Africa.
+
+With help of the placebo test we compare two regions which are similar in climate conditions because both lie in the tropics. But the TseTse only exists in Africa and because of that outside Africa there is no vector to transmit the sleeping sickness which keeps because of that restricted to Africa. Nevertheless, we apply the TseTse population model to the tropics outside of Africa to test our hypothesis that the sleeping sickness and not the underlying climate variables impacted the African development.
+  
+#< quiz "expectation"
+question: Let us have a closer look at the regression formula. What do you expect under the assumption that the TSI is measuring the effect of the sleeping sickness and not only the influence of climate?
+sc:
+    - the correlation between TSI and the development variables is significant
+    - the correlation between the interaction of TSI x Africa and the development variables is significant*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+In the analysis before we clustered based on cultural provinces. But we do not have this information for ethnic groups outside of Africa so we use a broader category. The new cluster category for our standard errors is now <span style="color:mediumvioletred">language family</span> which describes linguistic affiliation. Through this we control for cultural and geographical relatedness.
+   
+#### Regression outside Africa
+Now we want to compute $\beta$ of regression (2) with robust standard errors clustered after <span style="color:mediumvioletred">language</span>.
+  
+#< info "psdef=false" 
+The <span style="color:mediumvioletred">felm()</span> command only works if we set <span style="color:mediumvioletred">psdef = FALSE</span>. The reason is beyond the space of this problem set so we will not discuss this in detail. 
+If you are interested, have a look [here](https://cran.r-project.org/web/packages/lfe/lfe.pdf).
+
+The explanation given in the description of the package:
+"In case of multiway clustering, the method of Cameron, Gelbach and Miller may yield a non-definite variance matrix. Ordinarily this is forced to be semidefinite by setting negative eigenvalues to zero. Setting psdef=FALSE will switch off this adjustment. Since the variance estimator is asymptotically correct, this should only have an effect when the clustering factors have very few levels." (Gaure et al. 2016).
+#>
+  
+I already wrote all necessary commands you just have to click check.
+```{r "6 c)"}
+#< task
+reg_animals_out = felm(animals ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language , data=pla, psdef = FALSE)
+
+reg_plow_out = felm(plow ~ TSI + meantemp + meanrh + itx + abslat +lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language, data=pla, psdef = FALSE)
+
+reg_female_out = felm(female_ag ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language, data=pla, psdef = FALSE)
+
+reg_intensive_out = felm(intensive ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language, data=pla, psdef = FALSE)
+
+reg_slavery_out = felm(slavery ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language, data=pla, psdef = FALSE)
+
+reg_central_out = felm(central ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language, data=pla, psdef = FALSE)
+
+#>
+```
+  
+Now please print out the result you just need to press check.
+```{r "6 d)", results= 'asis'}
+#< task
+stargazer(reg_animals_out , reg_intensive_out , reg_plow_out , reg_female_out , reg_slavery_out , reg_central_out , type = "html" , title = "Placebo Test: Main effect TSI (beta)")
+#>
+```
+  
+  
+#### Interpretation
+The output describes the connection between TSI and development variables for groups living **outside** Africa.
+Looking at the regression coefficient $\beta$ printed out in the first row we see that except for <span style="color:mediumvioletred">plow</span> use there are no stars displayed behind the coefficients which means they are no longer significant. Also, the coefficients are very small and have the opposite sign as we would expect trough logical considerations.
+
+#< info "Why is plow use outside Arica significant?" 
+We expected the correlation between plow use and the TSI outside of Africa to be insignificant because the Tsetse does not exist. However, we observe a significant result. This effect is mainly driven by the countries China, India, and Indonesia. The author assumes that the reason is a geographic factor which we did not control for. This omitted variable is correlated with the TSI and influences the used food production technic in these countries. An example for such a variable would be the suitability for rice. The above mentioned Asian countries are well known for a high amount of rice cultivation.
+#>
+
+#### Regression inside Africa
+Now we want to calculate the correlation between TSI and the development variables for ethnic populations **inside** Africa. Therefore, we use the variable <span style="color:mediumvioletred">africa_tsetse</span> which describes the interaction between TSI and the dummy variable <span style="color:mediumvioletred">africa</span>.
+
+```{r "6 e)"}
+#< task_notest
+
+reg_animals_in = felm(animals ~ africa_tsetse + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + TSI | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_plow_in = felm(plow~africa_tsetse + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + TSI | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_female_in = felm(female_ag~africa_tsetse + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + TSI | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_intensive_in = felm(intensive ~ africa_tsetse + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + TSI | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_slavery_in = felm(slavery ~ africa_tsetse  +meantemp+ meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + TSI | 0 | 0 | language, data=pla, psdef = FALSE)
+
+reg_central_in= felm(central~africa_tsetse + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + TSI | 0 | 0 | language , data = pla, psdef = FALSE)
+#>
+```
+  
+Before we print out the result have a guess:
+
+#< quiz "inside Africa"
+question: In contrast to the regression before what result do you expect for the regression coefficient delta which measures the effect of TSI inside Africa?
+mc:
+    - the regression coefficients will be significant*
+    - the regression coefficients will be smaller
+    - the regression coefficients  will be bigger*
+success: Great, all answers are correct!
+failure: Not all answers correct. Try again.
+#>
+
+Printing out the results:
+  
+```{r "6 f)", results= 'asis'}
+#< task
+stargazer(reg_animals_in , reg_intensive_in , reg_plow_in , reg_female_in , reg_slavery_in , reg_central_in , type = "html", title = "Placebo Test: Africa interaction TSI (delta)")
+#>
+```
+
+Looking at the table we see that the coefficients are significant and the signs are as we expected.
+
+At the end of this comparison between the groups inside and outside Africa we can summarize that the TSI does not only measure general patterns between climate factors and development.
+  
+  
+*This exercise refers to page 18 - 20 of the paper.*
+
+## Exercise 7 -- Simulation of Africa without the TseTse and archeological evidence illustrated by the example of Great Zimbabwe
+
+### Loading results from previous exercise
+
+Like at the beginning of the previous exercises we have to load the data.  
+Just press check.
+
+```{r "7 a)"}
+#< task_notest
+pla = read.dta("placebo.dta")
+#>
+```
+
+The base of this exercise are the regression coefficients from the previous exercise. To work with the results, we have to run the regressions again. You do not have to type in anything just press check.  
+
+```{r "7 b)"}
+#< task
+reg_animals_out = felm(animals ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_plow_out = felm(plow ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_female_out = felm(female_ag ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_intensive_out = felm(intensive ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_slavery_out = felm(slavery ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language , data = pla, psdef = FALSE)
+
+reg_central_out = felm(central ~ TSI + meantemp + meanrh + itx + abslat + lon + malaria + coast + river + meanalt + SI + africa + africa_rhum + africa_temp + africa_itx + africa_malaria + africa_SI + africa_alt + africa_coast + africa_abslat + africa_rivers + africa_lon + africa_tsetse | 0 | 0 | language , data = pla, psdef = FALSE)
+
+#>
+```
+
+#< quiz "hypothesis"
+question: In the previous exercises, we analyzed the hypothesis that the TseTse affected the ... in precolonial Africa.
+mc:
+    - subsistence strategy*
+    - centralization*
+    - education
+    - plough use*
+    - husbandry*
+    - GDP
+success: Great, all answers are correct!
+failure: Not all answers correct. Try again.
+#>
+
+Our analysis support the assumption that the TseTse had a great impact on the development of historical Africa. This raises the question: How would have Africa evolved if the TseTse had not existed? Would it be more advanced?
+
+### Archaeological evidence: Great Zimbabwe
+To approach this answer we go back in history and have a closer look at Great Zimbabwe. What makes this region interesting for us? Archaeologists discovered numerous deteriorate monuments which testify the political and economic importance of Zimbabwe in the past. The complex buildings were the largest south of the Sahara in the time before the colonialization. Also, Zimbabwe was free of the Tsetse because the geographical position on a plateau between two rivers created a natural protection against the fly. The TseTse can only exist in lower-lying areas (Ampim 2004). It is notable that the boundaries described by the ruins of Great Zimbabwe correspond with the boundaries of TseTse appearance determined by climate which we adopt from the research work of Rogers and Randolph (1986). Because of these observations we take Great Zimbabwe as an example to investigate, how Africa would have developed without the TseTse.  
+
+How did people lived in historical Zimbabwe?  
+There subsistence strategy was multifarious. During excavations archaeologists found skeletons of livestock and concluded that they relied on husbandry, mainly kept cattle. The inhabitants also grew cereals and traded in gold and ivory with countries as far as China and Arabia (Huffman 2009). If we compare these observations with the results gained in the previous regressions, we will recognize a big difference. The Tsetse hindered ethnic groups in the past to use a plow, posess large animals and perform intensive agriculture.
+
+This far to the archaeological evidence. In the following we want to simulate on the base of the dataset placebo if we can find evidence in our dataset.
+
+### Simulation with a lower level of TSI
+#### Prediction of the Baseline 
+
+We will work with the dataset <span style="color:mediumvioletred">placebo</span>. If you want detailed information about the dataset, have a look at the previous task. 
+
+In a next step we prepare the data. Therefore, we use the command <span style="color:mediumvioletred">filter()</span> to select all rows of the dataset where the dummy variable <span style="color:mediumvioletred">africa</span> equals 1. In R an equation is written with two equal signs <span style="color:mediumvioletred">==</span> . Have a look at the info box if you are not familiar with the new command.
+
+#< info "filter()"
+The command <span style="color:mediumvioletred">filter()</span> is part of the package <span style="color:mediumvioletred">dplyr</span>. The function requires two arguments. First, we pass the name of the dataset that we want to manipulate. Second, we determine an expression which defines the rows of the data frame that will be selected. It is also possible to join several filtering expressions with Boolean operators.
+#>
+
+Please generate a new variable called <span style="color:mediumvioletred">pla_africa</span> which contains all rows in which the variable <span style="color:mediumvioletred">africa</span> has the value 1. Use the command <span style="color:mediumvioletred">filter()</span> to create a subset of the dataset <span style="color:mediumvioletred">pla</span>.
+```{r "7 c)"}
+# Preparing the data 
+pla_africa = filter(pla, africa==1)
+```
+
+#< award "Data manipulation"
+Nicely done! You learned some basics of data manipulation.
+#>
+
+Now the dataset only contains ethnic groups that lived in Africa and the tropics.
+
+In a next step, we want to predict the development variables. Therefore, we use the regressions calculated above together with the function <span style="color:mediumvioletred">predict.felm()</span> from the package <span style="color:mediumvioletred">regtools</span> written by Kranz (2016).
+
+We assign the prediction to a variable called <span style="color:mediumvioletred">v1_</span> followed by the name of the development variable we aim to predict like <span style="color:mediumvioletred">animals</span> or <span style="color:mediumvioletred">intensive</span>.
+Then <span style="color:mediumvioletred">predict.felm()</span> is applied on the regression describing the connection between development indicators and the TSI for groups outside Africa. As a second argument we pass the manipulated dataset <span style="color:mediumvioletred">pla_africa</span>. Out of this we then calculate the <span style="color:mediumvioletred">mean</span>.  
+Just press check.
+
+```{r "7 d)"}
+#< task
+
+# Prediction
+v1_animals = mean(predict.felm(reg_animals_out , newdata = pla_africa))
+v1_plow = mean(predict.felm(reg_plow_out , newdata = pla_africa))
+v1_female = mean(predict.felm(reg_female_out , newdata = pla_africa))
+v1_intensive = mean(predict.felm(reg_intensive_out , newdata = pla_africa))
+v1_slavery = mean(predict.felm(reg_slavery_out , newdata = pla_africa))
+v1_central = mean(predict.felm(reg_central_out , newdata = pla_africa))
+#>
+```
+
+Presenting the results in a table, just press check:
+```{r "7 e)"}
+#< task
+Africa_Baseline_TseTse = round(c(v1_animals , v1_plow , v1_female , v1_intensive , v1_slavery , v1_central) , 2)
+
+# defining table captions
+development = c("Large domesticated animals" , "Plow use" , "Female participation in agriculture" , "intensive agriculture" , "Indigenous slavery" , "Centralization")
+
+table1 = data.frame(development , Africa_Baseline_TseTse)
+
+# printing out the table
+table1
+#>
+```
+
+So this table shows the average values of the predicted outcomes for the development variables. We will use this as a baseline for a comparison with a simulation of Africa with a lower level of Tsetse. There is not a lot to say about this single table the meaning comes when we compare it with the simulation in the next task.
+  
+#### Prediction of the Simulation with a lower level of TSI
+In the following we will simulate Africa with a lower burden of Tsetse.
+First, we have to manipulate the filtered data once again. We subtract one from the variable <span style="color:mediumvioletred">africa_tsetse</span> for all observation. Because of the standardization this corresponds to a reduction of one standard deviation in the TSI. With help of this reduction we can analyze how the development variables chance with a lower level of TseTse transmitted diseases. The solution is already given just press check.
+
+```{r "7 f)"}
+#< task
+pla_v2 = pla_africa
+pla_v2$africa_tsetse = pla_v2$africa_tsetse-1
+#>
+```
+
+Like before we predict the development variables, but this time with lower values for TSI.  
+Just click check.
+```{r "7 g)"}
+#< task
+# Africa Reduced TseTse
+v2_animals = mean(predict.felm(reg_animals_out , newdata = pla_v2))
+v2_plow = mean(predict.felm(reg_plow_out , newdata = pla_v2))
+v2_female = mean(predict.felm(reg_female_out , newdata = pla_v2))
+v2_intensive = mean(predict.felm(reg_intensive_out , newdata = pla_v2))
+v2_slavery = mean(predict.felm(reg_slavery_out , newdata = pla_v2))
+v2_central = mean(predict.felm(reg_central_out , newdata = pla_v2))
+#>
+```
+
+In the next step, we create the table. Click check to create the table.
+
+```{r "7 h)"}
+#< task
+Africa_Reduced_TseTse = round(c(v2_animals , v2_plow , v2_female , v2_intensive , v2_slavery , v2_central), 2)
+
+table2 = data.frame(table1 , Africa_Reduced_TseTse)
+#>
+```
+  
+  
+#### Comparing simulation and baseline
+
+Now we want to print out both tables and compare them. Please print out <span style="color:mediumvioletred">table2</span>
+```{r "7 i)"}
+table2
+```
+
+What do we observe while comparing?  
+The values for <span style="color:mediumvioletred">keeping large animals, intensive agriculture, plow use</span> and <span style="color:mediumvioletred">centralization</span> increased. Whereas the predictions for <span style="color:mediumvioletred">female participation</span> and <span style="color:mediumvioletred">slavery</span> decreased. This fits to our hypothesis that groups with a lower TseTse burden developed on a higher level. 
+
+But we have to be careful with the interpretation. We cannot conclude based on the analysis that nowadays Africa would be more advanced because of the heritage from the past. There are endogenous responses like the colonialization which we did not consider. More information in the info block below.
+
+#< info "Colonialization and the TseTse"
+Researchers assume that there is a relation between the late colonialization of some African countries and the TseTse. Groups which aimed to occupy new areas often used horses or other big animals for transport and fighting. If the animals are affected by the sleeping sickness, the groups will be weakened. So the TseTse might have caused a delay in colonialization (Fukuyama 2011).  
+By the way, the TseTse also hindered the ethnic groups to possess large herds and flocks or strongly expanding agriculture. This might have protected the biodiversity of Africa.
+#> 
+  
+  
+*This exercise refers to page 20 - 22 of the paper.*
+
+## Exercise 8 -- Impact of the TseTse on modern African development  
+
+So much for the past. But what effect has the Tsetse on nowadays Africa? We are going to investigate the question in this chapter.  
+The challenge hereby is that the sleeping sickness impacts the political and economic structure in two ways. First, it shows a direct impact on health today because animals get ill. Second, it has an indirect effect on the development of institutions in the past and this results in a higher or respectively lower development level today. To estimate the historical impact of Tsetse on the development we have to detangle these two effects.
+
+### Extermination campaigns
+
+The first approach that comes into mind is to investigate extermination campaigns. The idea behind this is to analyze the development in regions which are now free of the TseTse fly. Through this we can exclude the direct impact on health and would learn more about the historical effect.  
+But, there is no sizable eradication campaign that managed to create a TseTse-free area.
+
+#< info "TseTse extermination campaigns"
+The extermination strategies can be clustered in ecological, chemical, biological, or genetic. They all aim to minimize or extinct the TseTse population.
+
+Ecological campaigns aim to modify the biotope so it is less suitable for the TseTse, for example through the burning of bushes. The disadvantage is that it is expensive and has a negative impact on the environment. Because of this reason they are hardly used nowadays.
+
+Chemical extinction involves the distribution of insecticides either by ground or aerial spraying. 
+In the past, there have been negative effects on the environment especially on other animals living on the ground or in the water. Also, if there are no barriers, TseTse flies from untreated areas migrate to the treated areas and reproduce there. A less invasive approach is to set up fly traps which are sprayed with insecticides or treat the skin of cattle with insecticides. This approach is easier, cheaper and shows only small negative effects on the surrounding environment. Disadvantages are a low efficiency and that it requires regular maintenance. 
+
+Biological extermination is based on the use of natural enemies and parasitism. The risks of this method on biodiversity can be high and there have been many warning examples in the past.
+
+Genetic strategies are younger than the campaigns discussed before. A very promising new approach is called sterile insect technique. It has been applied in Zanzibar, an island of Tanzania. The researchers brewed male flights which are infertile because they have been sterilized before by using a nuclear method. Afterwards they released them into the wild. A special characteristic of the TseTse is that the females are only fertilized once in their life and collect the sperm for later. The biggest disadvantage of this method is the high costs.
+
+This is an interesting field of research unfortunately the details are beyond the scope of this bachelor thesis. To find out more, right click [here](http://www.fao.org/docrep/004/Y2022E/y2022e02.htm) or [here](http://www.afrivip.org/sites/default/files/00_TseTse_complete_module_0.pdf) and open it in a new tab.
+
+(Feldmann and Hendrichs 2001)
+(De Deken o.J., p. 32-43)
+#>
+
+### Climate change
+The second approach is to search for areas which have been populated by the TseTse fly. But because of a change in temperature they are now no longer suitable for the fly. The change can also be vice versa so through climate change a region which has been TseTse free is now populated by the fly.
+
+#< quiz "TseTse temperature change"
+question: Have a guess! Which regions have the higher change to show this characteristic climate change?
+sc:
+    - regions near the equator, the middle of the TseTse infested area
+    - regions in the far north or south, at the border of the TseTse belt*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+In order to find such climate changes we will have a higher change if we search at the geographic limits of the TseTse region. If we found such areas, we would perform a regression discontinuity study.
+The problem of this approach is a lack of data. We neither have detailed enough climate data nor observations of development variables over several years.
+
+### Discussion of the new dataset subnational
+The data of nowadays Africa we have is saved in the dataset <span style="color:mediumvioletred">subnational.dta</span>. Let us load it and shortly discuss the variables.
+
+```{r "8 a)"}
+#< task
+# loading the data
+sub = read.dta("subnational.dta")
+#>
+```
+
+Once again we want to use the command <span style="color:mediumvioletred">sample_n</span> to randomly select 6 rows of the new dataset. It is your turn to type in the right command.
+```{r "8 b)"}
+sample_n(sub, 6)
+```
+
+Most variables are equivalent to the datasets before but calculated with nowadays data. Here is a short description of the new variables:
+
+- <span style="color:mediumvioletred">adm1_code</span>: unique number which identifies the observed district. This variable is the primary key for the dataset <span style="color:mediumvioletred">subnational.dta</span>.
+- <span style="color:mediumvioletred">ln_lights</span>: log (average luminosity + 0.01). The small value is added to prevent transferring zero to the logarithm. Remember, the logarithm of zero or a negative number is undefined. The luminosity is measured by night and is an indicator for development. The data is from 2008 raised by Us Air Force Weather Agency and prepared by NOAA (National Oceanic and Atmospheric Administration).  
+- <span style="color:mediumvioletred">ln_livestock</span>: variable calculated as log(number of cattle +1). Like we already observed in the variable <span style="color:mediumvioletred">ln_lights</span> a small value is added to prevent transferring zero to the logarithm. The data is from 2005 raised by FAO.  
+- <span style="color:mediumvioletred">near_inlandwater</span>: dummy variable. 1 if the area is close to a lake or river which is bigger than 500 square kilometers. 0 if not.
+- <span style="color:mediumvioletred">tsi</span>: TseTse suitability index calculated with **modern** climate data raised by the East Anglia Climate Research Unit for the years between 1961 and 1990. The climate data is measured every ten minutes and then an average monthly value is calculated.
+- <span style="color:mediumvioletred">frcn_central</span>: The variable is based on the Ethnographic Atlas (Murdock 1967) and records the rate of nowadays inhabitants whose forebears lived in a society which is classified as centralized.
+  
+  
+The variable <span style="color:mediumvioletred">frdn_central</span> is calculated according to this formula:
+
+**<span class="math">$$Historical Centralization_{d,c} = \frac{\sum_{j} L_{j,d,c} * I_{j}}{L_{d,c}}$$</span>**
+
+- $j$ identifies the ethnic group.   
+- $d$ identifies the district. 
+- $c$ identifies the country.
+- $I_j$: binary variable which indicates for every ethnic group $j$ if they were centralized (equals 1) or not (equals 0).
+  
+- $L_{d,c}$ describes the total number of people which lived in country c and district d.
+- $L_{j,d,c}$ represents the amount of people of an ethnic group which live in district d and country c.
+  
+So the variable <span style="color:mediumvioletred">frdn_central</span> is the population-weighted mean of a district's centralization before the colonialization.
+  
+One difference to the previously used datasets <span style="color:mediumvioletred">precolonial.dta</span> and <span style="color:mediumvioletred">placebo.dta</span> is that the <span style="color:mediumvioletred">tsi</span> is calculated with modern climate data. The other one is that the dataset is ordered after districts and not ethnic groups.
+
+### Regression: Present economic outcome on TSI calculated with modern climate data
+
+In the following we want to compute the regression using formula (1) to find out more about the relationship between two development indicators and the TSI. The indicators are luminosity and the number of cattle. Systematically we add control variables for climate and geography, and country fixed effects to the regression. We are particularly interested in what happens if we control for historical centralization measured by the variable <span style="color:mediumvioletred">frcn_central</span>. Remember, in the exercises before we found a correlation between ancient TSI and historical centralization. Will the regression coefficient between modern TSI and luminosity or the number of cattle loses be significant, too?
+
+#### Regression equation (1):
+
+**<span class="math">$$Outcome_j = \alpha + \delta TSI_j + X'_j \Omega + \epsilon_j$$</span>**
+
+The variables we want to regress on are <span style="color:mediumvioletred">log(mean luminosity +0.01)</span> and <span style="color:mediumvioletred">log(number of cattle +1)</span>.
+  
+  
+#### Luminosity as a measure for economic outcome
+
+#< info "Light density and relationship with development"
+Our aim is to evaluate the subnational economic development of Africa. An obstacle here is that many of the observed countries are poor and war-torn so there is no economic census or the necessary infrastructure to collect statistics. So, it is a challenge to get reliable data.  
+One approach is to measure night-time light by satellite and use this to proxy economic performance. What is the concept behind? Did you ever fly with a plane at night over several countries? There is a big difference in flying over India or Alaska. You can tell even from above if there are human settlements and modern infrastructure. 
+The big advantage is that data for luminosity is available for almost every part of the world and it can be measured objectively. 
+
+If you want to find out more, right click [here](http://www.nber.org/papers/w16317.pdf) and open it in a new tab.
+
+(Chen and Nordhaus 2010; Michalopoulos and Papaioannou 2015)
+#>
+
+In the analysis before we clustered based on cultural provinces. But we do not have this information for ethnic groups outside of Africa, so we use a broader category. The new cluster category for our standard errors is language family to control for cultural and geographical relatedness.
+
+Additionally, we add country fixed effects to our regression as a proxy for nowadays differences in institutions and policies.
+
+#< info "Fixed effects"
+Fixed effects are also called unobserved effects. They are used for cross-sectional heterogeneity and take into account unobserved heterogeneity between the districts in a country so we prevent the districts to have an omitted variable bias. We use them because we know that there are variations in institution on a district level which influence the development. The idea behind is that the districts vary in many ways additionally to the TSI and the control variables from other districts.
+
+Why do we use both, fixed effects and clustered standard errors?
+The clustered standard errors control for spatial correlation. We use them if we assume that standard errors are correlated. So that groups living near each other show similarities in development. Whereas the fixed effects just control in general that some groups show more developed institutions. Fixed effects change the coefficients clustered standard errors do not.
+
+Consequently, we have several data points of dissimilar districts located in the same country. We allow a different intercept for every country. In R the estimation is made by including a dummy for each country. If you look at the regression output, you can see that all countries are listed as a dependent variable in our computations. Therefore, we allow every country to have a different intercept.
+
+(Wooldridge 2010, p. 455-457, 481-489; Kennedy 2013, p. 282-286)
+#>
+
+So, in the following code we add the control clusters and fixed effects one after another. Just click check.
+```{r "8 c)"}
+#< task
+# added climate control and proportion of land area in the topics and malaria control
+reg_light1 = felm(ln_lights ~ tsi + meantemp + meanrh + itx + prop_tropics + malaria | 0 | 0 | adm0_code , data=sub)
+
+# added other geographic controls
+reg_light2 = felm(ln_lights ~ tsi + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI | 0 | 0 | adm0_code , data = sub)
+
+# added country fixed effects
+reg_light3 = felm(ln_lights ~ tsi + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI| adm0_code | 0 | adm0_code , data = sub)
+
+# added control for historical centralization
+reg_light4 = felm(ln_lights ~ tsi + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI + frcn_central | adm0_code | 0 | adm0_code , data = sub)
+
+# regression of centralization on livestock
+reg_central5 = felm(ln_lights ~ frcn_central + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI + frcn_central | adm0_code | 0 | adm0_code , data = sub)
+#>
+```
+
+
+Printing out the result. Just press check.
+```{r "8 d)", results= 'asis'}
+#< task
+stargazer(reg_light1 , reg_light2 , reg_light3 , reg_light4 , reg_central5 , type = "html" , title = "Relationship between modern economic development (log mean luminosity) and the TseTse suitability")
+#>
+```
+  
+  
+#### Interpretation of the regression output 
+
+Step by step we added control variables and fixed effects to the regression. Now we want to analyze how the regression coefficient changes. To make it more interesting it is designed intuitively and you work out the answers in solving the following quizzes.
+
+Let us have a look at the first regression we performed. 
+
+#< quiz "interpretation luminosity"
+question: How to interpret the first regression output where we control for <span style="color:mediumvioletred">climate, proportion of land area in the tropics</span> and <span style="color:mediumvioletred">malaria</span>?
+sc:
+    - A raise of one standard deviation in the TSI is related to a significant reduction in light density of        4.4 %
+    - A raise of one unit in the TSI is related to a significant reduction in light density of 44 units
+    - A raise of one percent in the TSI is related to a significant reduction in light density of 44 %
+    - A raise of one standard deviation in the TSI is related to a significant reduction in light density of        44 %*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+Note:  
+In column three we included geographic control variables like <span style="color:mediumvioletred">absolue latitude</span>. Also, we include control variables called <span style="color:mediumvioletred">coast</span> and <span style="color:mediumvioletred">near_inlandwater</span>. This is very important when working with luminosity data. Light is reflected by water; this effect is called blooming. Imagine yourself standing next to a lake at full moon with no clouds while looking at the lake. You will see the reflection of nearby lights, moon and stars. Having this picture in mind we can imagine that regions near the water show higher luminosity values no matter of their stage of development. 
+   
+We observe in column two that the correlation between <span style="color:mediumvioletred">luminosity</span> and <span style="color:mediumvioletred">tsi</span> became stronger and the significance level increased.
+
+In the next column, we add fixed effect for the countries saved in the variable <span style="color:mediumvioletred">adm0_code</span>.  
+
+#< quiz "tsi coefficient significance level"
+question: Through controlling for modern institutions what happens to the <span style="color:mediumvioletred">tsi</span> regression coefficient and the significance level compared to the regression in column 2?
+mc:
+    - the tsi coefficient falls by 30 percentage points* 
+    - the tsi coefficient falls by 3.9 percentage points 
+    - the tsi coefficient falls by 390 percentage points 
+    - the significance increases from a 10 % level to a level of 1 %*
+    - the significance decreases from a 1 % level to a level of 10 %
+    - there is no effect on the coefficient and the significance level
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+In column 4 we control for historical centralization with adding <span style="color:mediumvioletred">frcn_central</span> to our regression. 
+
+#< quiz "historical centralization"
+question: What do you observe for the regression between <span style="color:mediumvioletred">tsi</span> and <span style="color:mediumvioletred">log(luminosity)</span> if we control for <span style="color:mediumvioletred">historical centralization</span>?
+sc:
+    - it is still significant on a high level
+    - it is no longer significant*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+This finding is consistent with the research of other scientists (Michalopoulos & and Papioannou 2013, 2014). 
+
+So, what is the effect on TSI of modern economic development?   
+We assume on base of the calculated regressions that nowadays there is no direct impact of TseTse on African development. In previous regressions, we found out that there is a correlation between <span style="color:mediumvioletred">historical centralization</span> and the TSI and between <span style="color:mediumvioletred">historical centralization</span> and nowadays development. If you want more details, have a look at the info box. We conclude that the effect of TSI on nowadays economic performance is not directly but indirectly over historical institutions.
+
+#< info "Relationship between historical centralization and nowadays economic development"
+Several researchers investigated that historical centralization has been the base for nowadays economic performance. They discovered a positive relationship between the development of today's economy and political centralization in precolonial Africa on national as well as subnational level. (Gennaioli & Rainer 2007; Michalopoulos & Papaioannou 2013, 2014)    
+Taking the same line there has been found a worldwide connection between economic and political institutions established in the past and present divergences in income. (Acemoglu and Robinson 2012)  
+How can we explain these findings?  
+Scientists argue that ethnic groups lacking political institutions show a higher possibility to plunge into chaos. In contrast, centralized groups manage to enforce principles, can offer public assets to the group member, and can therefore support the growth of their economy.
+#>
+  
+  
+#### Number of cattle as a measure for animal husbandry 
+The author runs the regression also for <span style="color:mediumvioletred">tsi</span> on the <span style="color:mediumvioletred">log(number of cattle)</span> in this district. Compute the regression by clicking check and have a look at the results. 
+
+```{r "8 e)"}
+#< task
+# added climate control and proportion of land area in the topics and malaria control
+reg_cattle1 = felm(ln_livestock ~ tsi + meantemp + meanrh + itx + prop_tropics + malaria | 0 | 0 | adm0_code , data = sub)
+
+# added other geographic controls
+reg_cattle2 = felm(ln_livestock ~ tsi + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI | 0 | 0 | adm0_code , data = sub)
+
+# added country fixed effects
+reg_cattle3 = felm(ln_livestock ~ tsi + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI | 0 | 0 | adm0_code , data = sub)
+
+# added control for historical centralization
+reg_cattle4 = felm(ln_livestock ~ tsi + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI + frcn_central | adm0_code | 0 | adm0_code , data = sub)
+
+# regression of centralization on livestock
+reg_central4 = felm(ln_livestock ~ frcn_central + meantemp + meanrh + itx + abslat + prop_tropics + malaria + near_inlandwater + coast + lon + meanalt + SI + frcn_central | adm0_code | 0 | adm0_code , data = sub)
+
+#>
+```
+
+Printing out the result:
+```{r "8 f)", results= 'asis'}
+#< task
+stargazer(reg_cattle1 , reg_cattle2 , reg_cattle3 , reg_cattle4 , reg_central4, type = "html" , title = "Relationship between modern economic development (log number of cattle) and the TseTse suitability")
+#>
+```
+
+This development indicator shows a small decrease of significance while adding additionally control variables and fixed effects. But in the end it stays significant on the 10 % level. The difference is that we do not find a correlation between the number of cattle and historical centralization. You can see that the coefficient printed in row frcn_central, column 5 in the stargazer output above has no stars.
+The findings indicate that animal husbandry in nowadays Africa is still held up by the TseTse.
+  
+  
+*This exercise refers to page 22 - 25 of the paper.*
+
+## Exercise 9 -- Robustness tests
+
+In the following sections we want to think about interferences that can endanger our empirical results. We will go through possible threats for validity one after another and discuss the relevance. Therefor we use the <span style="color:mediumvioletred">precolonial</span> dataset. Once again the first step is to load the data.
+
+```{r "9 a) "}
+#< task
+pre = read.dta("precolonial.dta")
+#>
+```
+  
+### Climate factors
+
+The biggest concern is that our regression results do not (only) show the effect of the TseTse on development. Instead climate factors like humidity and temperature have a causal effect on the African development variables and we measure this effect. If this holds true, climate factors and not the TSI are the reason that some ethnic groups did not developed settlements, used the plough, or kept farm animals.
+  
+#### Correlation between agricultural suitability and TSI
+
+To get an impression of the correlation between agricultural suitability and the TSI we print a scatterplot. If you want to find out more about the variable <span style="color:mediumvioletred">SI</span> describing agricultural suitability, just open the info block. 
+
+#< info "Variable SI, measuring agricultural suitability" 
+The data describes the suitability of the land to cultivate rain fed crops. The data has been collected by the FAO by combining conditions of climate, soil, and topography. 
+The suitability index is normalized and therefore ranges from 0 to 1. A higher value codes a higher suitability.
+#>
+
+For the plotting, we will use the package <span style="color:mediumvioletred">ggplot2</span>. To find out more about the package read the info section below.
+
+#< info "ggplot2" 
+The package <span style="color:mediumvioletred">ggplot2</span> makes it easy for use to visualize data. We can combine several lines, points, and quantiles in one plot. The logic here is very intuitive we merge together the elements just by writing them after each other separated by a <span style="color:mediumvioletred">+</span>. The commands for creating plot elements are intuitive mostly its <span style="color:mediumvioletred">geom_</span> followed by the demanded element like <span style="color:mediumvioletred">point</span> or <span style="color:mediumvioletred">line</span>.
+
+To get more details just right click [here](https://cran.r-project.org/web/packages/ggplot2/ggplot2.pdf) and open a new tab.
+#>
+
+To analyze the correlation between TSI and agriculture graphically we print out a scatterplot.
+Therefore, we assign the scatterplot to a variable called <span style="color:mediumvioletred">scatter</span>. The used command is <span style="color:mediumvioletred">ggplot(data, aes(x=variable on the x axis, y=variable on the x axis))</span>. With the command <span style="color:mediumvioletred">geom_point</span> we define the shape of the dots. In our case, we want to print out hallow circles. With <span style="color:mediumvioletred">position_jitter</span> we prevent overlapping. In our plot, we have many dots lying over each other so in some case we only see one dot, but actually there are several lying behind which we cannot see. So, we jitter the points which means adding random noise to make it easier to read the plot. <span style="color:mediumvioletred">position_jitter(width = 0.1, height = 0.1)</span> is the right command here. Width respectively height defines the amount the plots are randomly shifted in horizontal respectively vertical direction. With the command <span style="color:mediumvioletred">labs(title="", x="", y="")</span> we add a heading and name the x and y axis.
+
+Just press check.
+```{r "9 b) "}
+#< task
+
+# assign the scatterplot to the variable scatter
+scatter = ggplot(pre , aes(x = TSI, y = SI)) +
+  geom_point(shape = 1, position = position_jitter(width = 0.1 , height = 0.1)) +    
+  geom_smooth(method = lm) +
+  labs(title = "Scatterplot: agricultural suitability vs. TSI", x = "TseTse suitability index" , y = "Suitability for rainfed agriculture")
+#>
+```
+
+Please print out the plot.
+```{r "9 c) ", optional=TRUE}
+scatter
+```
+
+#< award "Scatter plots"
+Awesome!  
+Now you know more about scatter plots which are often used in econometrics because they are easy to compute and the interpretation is intuitive.
+#>
+
+How to interpret the plot?  
+We have 3 elements: dots, a blue regression line and the grey shaded confidence area. The confidence interval of 95 % is included by default. Every observation of the dataset corresponds to a dot in the scatterplot. The regression line is chosen so that it fits best between the dots which means that the distances are as small as possible.  
+The regression line has a positive slope which tells us that TSI and <span style="color:mediumvioletred">SI</span> are positively correlated. In exercise four we made the same assumption based on TSI and <span style="color:mediumvioletred">SI</span> plotted on a map of Africa. This  reassures us that our regressions do not only measure the negative effects of climate. Regions that fit for the fly are also fertile above average.
+   
+   
+### Alternative TseTse indices
+
+In the following robustness tests we focus on the way the TSI is calculated, choose different approaches and analyze the results.
+  
+#### Minor Perturbation of TSI
+
+The idea behind this robustness test is to manipulate the TseTse birth rate raised by the author in laboratory experiments slightly and run the regressions analyzing main development variables again. In the following we will alternate the TSI with a shifted version called <span style="color:mediumvioletred">pertube_TSI1</span> for a left deviation and <span style="color:mediumvioletred">pertube_TSI2</span> for a transformation to the right. Compared to the real observations gained in the laboratory the birth and death rate of the fly is changed slightly. The birth rate is deviated one standard deviation in both directions. The death rate includes a critical threshold which marks the temperature at which the fly falls into a chill coma. This critical value is raised by one standard deviation which corresponds to about 3 °C. 
+
+#< info "Chill coma" 
+When insects like the TseTse are exposed to low temperature they enter a status called chill coma. It describes a coma-like condition in which the fly does not move. For an adult TseTse fly the critical temperature is below 22 °C. Normally the chill coma is completely reversible. But if the temperature is too low and/or the duration of the cold exposure is too long, it can lead to irreparable injuries.
+(Findsen et al. 2014)
+#>
+
+First, we want to print out the real TSI and the shifted TSI indices to get an overview. The argument <span style="color:mediumvioletred">alpha</span> defines the transparence of the filling color. Please press check to run the code.
+```{r "9 d)", results= 'asis'}
+#< task
+ggplot(pre) +
+  geom_histogram(aes(pre$TSI) , fill = "black" , alpha = 0.2)  +
+  geom_histogram(aes(pre$perturb_TSI1) ,  fill = "red" , alpha = 0.2) +
+  geom_histogram(aes(pre$perturb_TSI2) , fill = "blue" , alpha = 0.2) +
+  labs(title = "Histogramm of TSI, the left and right perturbation")
+#>
+```
+The histogram of the normal TSI is grey, the left perturbation light red and the right perturbation light blue.
+The mean is always 0 because all three indices are normalized. 
+
+After getting a feeling for the perturbation we run the regressions with the TSI modified to the left side. Please click check. 
+```{r "9 e)"}
+
+#< task
+
+reg_animals_lshift = felm(animals ~ perturb_TSI1 + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_intensive_lshift = felm(intensive ~ perturb_TSI1 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_plow_lshift = felm(plow ~ perturb_TSI1 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_female_lshift = felm(female_ag ~ perturb_TSI1 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_popd_lshift = felm(ln_popd ~ perturb_TSI1 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_slavery_lshift = felm(slavery~perturb_TSI1 + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt +SI | 0 | 0 | province , data=pre , psdef = FALSE)
+
+reg_central_lshift = felm(central ~ perturb_TSI1 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+#>
+```
+
+Let us show the results. Therefore, we once again use the package <span style="color:mediumvioletred">stargazer</span>. Just press check.
+```{r "9 f)", results= 'asis'}
+#< task
+stargazer(reg_animals_lshift , reg_intensive_lshift , reg_plow_lshift , reg_female_lshift , reg_popd_lshift , reg_slavery_lshift , reg_central_lshift , type = "html", title = "Robustness test: Left perturbation") 
+#>
+```
+
+We see that with only a slight perturbation in the TSI calculation the regression results are no longer significant. The perturbations are small, but have a big impact on the physiology of the fly. This reassures us that the TSI is a good measurement to capture the effect of the sleeping sickness and not only climate conditions.
+
+The same perturbation we did to the left side we know want to apply to the right side.
+```{r "9 g)"}
+
+#< task
+
+reg_animals_rshift = felm(animals ~ perturb_TSI2 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_intensive_rshift = felm(intensive ~ perturb_TSI2 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_plow_rshift = felm(plow ~ perturb_TSI2 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_female_rshift = felm(female_ag ~ perturb_TSI2 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_popd_rshift = felm(ln_popd ~ perturb_TSI2 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_slavery_rshift = felm(slavery ~ perturb_TSI2 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_central_rshift = felm(central ~ perturb_TSI2 + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+#>
+```
+
+After we calculate the regressions with the perturbed TSI we want to show the results with <span style="color:mediumvioletred">stargazer</span>. Just press check to create a table.
+```{r "9 h)", results= 'asis'}
+
+#< task
+stargazer(reg_animals_rshift , reg_intensive_rshift , reg_plow_rshift , reg_female_rshift , reg_popd_rshift , reg_slavery_rshift , reg_central_rshift , type = "html", title = "Robustness test: Right perturbation") 
+#>
+```
+
+In this case - the perturbation to the right - we see the same changes as before. The regression results are also no longer significant. 
+  
+  
+#### Instinctive growth rate
+
+The second robustness test we perform affects the way the TSI is calculated. To estimate the number of flies in historical Africa we use the climate data temperature and humidity.
+
+Critics might argue that the formula describing the relationship between climate input variables and the TseTse density is manipulated to find a regression correlation. To weaken this argument, we repeat the regression using the intrinsic growth rate. The corresponding formula:
+  
+  **<span class="math">$$ \Lambda = max ((B - M),0)$$</span>**
+  
+So, to get the growth rate ($\Lambda$), we simply subtract the death rate (M) from the birth rate (B) with the restriction that there is no negative population.   
+
+Subsequent we replace the TSI with the calculated growth rate and repeat the regressions. The author already calculated the growth rate and saved it in the dataset under the variable called <span style="color:mediumvioletred">r</span>. Just click check.
+
+```{r "9 i)"}
+#< task
+reg_animals_growth = felm(animals ~ r + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_intensive_growth = felm(intensive ~ r + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_plow_growth = felm(plow ~ r + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_female_growth = felm(female_ag ~ r + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_popd_growth = felm(ln_popd ~ r + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_slavery_growth = felm(slavery ~ r + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_central_growth = felm(central ~ r + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+#>
+```
+
+Printing out the regression output. Press to check to display the table.
+
+```{r "9 j)", results= 'asis'}
+#< task
+
+stargazer(reg_animals_growth , reg_intensive_growth , reg_plow_growth , reg_female_growth , reg_popd_growth , reg_slavery_growth , reg_central_growth , type = "html", title = "Robustness test: Instinctive growth rate")
+
+#>
+```
+
+When observe that the regression results are still significant. Also, the signs of the coefficients are like the regression performed with TSI. These results confirm us that we are not only picking up a physiological relationship between climate and TSI.  
+  
+Maybe you are confused because the regression coefficients are completely different to the regression with TSI. This is because the TSI is normalized and describes the steady state fly population in contrast to the variable <span style="color:mediumvioletred">r</span> which describes the growth rate. 
+  
+  
+#### Optimal TseTse conditions
+
+The last concern we want to test is whether the TSI is based on cherry-picking parameters. If you did not hear about cherry picking in data analysis before, please open the info block below.
+The concern is that the parameters used to calculate the TSI are manipulated to get the desired result. Hence the underlying formula is calculated to get significant regression results between TSI and the development variables.
+
+#< info "Cherry picking"
+In this case, we observe a biased selection of data with the aim to support a preconceived hypothesis
+(Klass 2012, p. 1-2).
+#>
+
+To weaken this concern, we no longer predict the TseTse by a method of potential based on laboratory data. Instead we use climate data collected through field research by Rogers and Randolph (1986) to predict the TseTse distribution. We calculate an index called <span style="color:mediumvioletred">optimal</span> which simulates the optimal fly survival rate by converting the climate conditions into a dummy variable. 
+
+#< info "Rogers and Randolph: optimal fly survival"
+The two researchers used field observations to calculates the optimal range of temperature and humidity for the TseTse. This is not our favored method because we cannot control for endogeneity like we did when using laboratory data. The field research data describing the Tsetse population can be influenced by human actions.
+#>
+
+Like before we use the <span style="color:mediumvioletred">felm()</span> command to calculate the regression with clustered standard errors and control variables. <span style="color:mediumvioletred">Optimum</span> is the variable which measures the optimal fly survival. Just click check to run the regressions.
+```{r "9 k)"}
+#< task
+reg_animals_opt = felm(animals ~ optimum + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_intensive_opt = felm(intensive ~ optimum + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_plow_opt = felm(plow ~ optimum + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_female_opt = felm(female_ag ~ optimum + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_popd_opt = felm(ln_popd ~ optimum + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_slavery_opt = felm(slavery ~ optimum + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+reg_central_opt = felm(central ~ optimum + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province , data = pre , psdef = FALSE)
+
+#>
+```
+
+
+Printing out the results:
+```{r "9 l)", results= 'asis'}
+#< task
+
+stargazer(reg_animals_opt , reg_intensive_opt , reg_plow_opt , reg_female_opt , reg_popd_opt , reg_slavery_opt , reg_central_opt , type = "html" , title = "Robustness test: Optimal TseTse conditions (field research) ")
+#>
+```
+
+Looking at the regressions we do not see big changes in the outcome. Only the variable <span style="color:mediumvioletred">central</span> which measures the rate of historical centralization is no longer significant and <span style="color:mediumvioletred">population density</span> and <span style="color:mediumvioletred">slavery</span> lost some percentage points in their significant levels. But overall the results are reassuring that our previous regression did not perform cherry picking unintentionally. 
+
+The author also performs a sensitivity analysis to test for fallacy of incomplete evidence and a Box-plot transformation because the TSI is negatively skewed. To hold the problem set short and interesting we will not discuss this in detail, but the results are reassuring that the TSI is a good way to predict development outcomes.
+  
+  
+## Alternative clustering 
+
+In this chapter, we perform the regressions analyzing historical agriculture and development outcome by using different approaches to calculate standard errors.  
+Remember: In our benchmark regression we used standard errors clustered by cultural relatedness. 
+
+### Standard errors clustered by country
+
+In this section, we choose an alternative way to cluster the standard errors. We cluster no longer by <span style="color:mediumvioletred">province</span> instead we use the variable <span style="color:mediumvioletred">isocode</span> to cluster by country. The variable contains an abbreviation for each ethnic group which refers to the geographic position in Africa.
+
+Before we use the new cluster we want to get a better understanding for the variable <span style="color:mediumvioletred">isocode</span> which is part of the dataset <span style="color:mediumvioletred">pre</span>. Consequently, we use the command <span style="color:mediumvioletred">table(name of the variable)</span> which prints out the different characteristics together with the frequency they are found in the dataset. Please fill in the right command in the field below.
+
+```{r "9 m)"}
+table(pre$isocode)
+```
+
+#< quiz "isocode"
+question: How many ethnic groups lived in Angola? (Please insert a number)
+answer: 10
+success: Great, your answer is correct! 
+failure: Try again.
+#>
+
+Next, we want to calculate the regressions clustering the standard errors by country. Run the regression by clicking check.
+
+```{r "9 n)"}
+#< task
+reg_animals_country = felm(animals ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | isocode , data = pre , psdef = FALSE)
+
+reg_intensive_country = felm(intensive ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | isocode , data = pre , psdef = FALSE)
+
+reg_plow_country = felm(plow ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | isocode , data = pre , psdef = FALSE)
+
+reg_female_country = felm(female_ag ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | isocode , data = pre , psdef = FALSE)
+
+reg_popd_country = felm(ln_popd ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | isocode , data = pre , psdef = FALSE)
+
+reg_slavery_country = felm(slavery ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | isocode , data = pre , psdef = FALSE)
+
+reg_central_country = felm(central ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | isocode , data = pre , psdef = FALSE)
+#>
+```
+
+Printing out the results:
+```{r "9 o)", results= 'asis'}
+#< task
+
+stargazer(reg_animals_country , reg_intensive_country , reg_plow_country , reg_female_country , reg_popd_country , reg_slavery_country , reg_central_country , type = "html" , title = "Robustness test: Country cluster ")
+#>
+```
+
+What are differences to the benchmark regression?   
+We see that the standard errors did not change a lot. For example, the standard error with cultural relatedness clusters for the intensive agriculture is 0.028 compared to 0.03 when using country clusters. Also, the regression results are still significant at a low level. This reassure us that the selected <span style="color:mediumvioletred">province</span> cluster captures well for spatial relatedness.
+  
+  
+#### Multiway Clustering
+
+In this chapter, we not only use one cluster as we did before. For calculating the standard errors we now cluster by cultural province **and** country.
+Technically we use the <span style="color:mediumvioletred">felm()</span> function again and combine the two selected clusters with <span style="color:mediumvioletred">+</span>. Please run the code with clicking check.
+
+```{r "9 p)"}
+#< task
+reg_animals_multic = felm(animals ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province + isocode , data = pre , psdef = FALSE)
+
+reg_intensive_multic= felm(intensive~TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province + isocode , data = pre , psdef = FALSE)
+
+reg_plow_multic = felm(plow ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province + isocode , data = pre , psdef = FALSE)
+
+reg_female_multic = felm(female_ag ~ TSI + prop_tropics + meantemp + meanrh +itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province + isocode , data = pre , psdef = FALSE)
+
+reg_popd_multic = felm(ln_popd ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province + isocode , data = pre , psdef = FALSE)
+
+reg_slavery_multic = felm(slavery ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province + isocode , data = pre , psdef = FALSE)
+
+reg_central_multic = felm(central ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | 0 | 0 | province + isocode , data = pre , psdef = FALSE)
+#>
+```
+
+Now please print out the result by clicking check.
+```{r "9 q)", results= 'asis'}
+#< task
+
+stargazer(reg_animals_multic , reg_intensive_multic , reg_plow_multic , reg_female_multic , reg_popd_multic , reg_slavery_multic , reg_central_multic , type = "html" , title = "Robustness test: Multiway Clustering (province and isocode)") 
+
+#>
+```
+
+#< quiz "multiway cluster"
+question: Do we observe a big difference in significance level and calculated standard errors?
+sc:
+  - yes
+  - no*
+success: Great, your answer is correct!
+failure: Try again.
+#>
+  
+These results confirm our benchmark regression.
+
+#### Negative selection
+
+Another aspect that we should consider is what happened before the Murdock's map - which we use for our analysis - was written. How did the groups interacte? Did more advanced groups force less developed groups onto TseTse infested regions? If this is often the case, the TseTse suitability index would not only measure the direct biological effect of the transmitted sleeping disease. Instead it also includes evolutionary selection.
+
+To control for this effect of negative selections we use fixed effects for cultural relationship. Cultural relationship acts here like the representative of group strength.
+
+#< info "Negative Selection"
+In nature, there are different variations of species existing which vary in their DNA. Negative selection is an evolutionary process which removes the unfit mutations that are not adapted well enough. This allows a long-run stability of the biological system.
+
+(Loewe 2008)
+#>
+
+Please click check.  
+Note: The standard errors are still clustered by <span style="color:mediumvioletred">province</span>.
+```{r "9 r)"}
+#< task
+
+reg_animals_fe = felm(animals ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | province | 0 | province , data = pre , psdef = FALSE)
+
+reg_intensive_fe = felm(intensive ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | province | 0 | province , data = pre , psdef = FALSE)
+
+reg_plow_fe = felm(plow ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | province | 0 | province , data = pre , psdef = FALSE)
+
+reg_female_fe = felm(female_ag ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | province | 0 | province , data = pre , psdef = FALSE)
+
+reg_popd_fe = felm(ln_popd ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | province | 0 | province , data = pre , psdef = FALSE)
+
+reg_slavery_fe = felm(slavery ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | province | 0 | province , data = pre , psdef = FALSE)
+
+reg_central_fe = felm(central ~ TSI + prop_tropics + meantemp + meanrh + itx + malaria + coast + river + lon + abslat + meanalt + SI | province | 0 | province , data = pre , psdef = FALSE)
+
+#>
+```
+
+Now please print out the result by clicking check.
+```{r "9 s)", results= 'asis'}
+#< task
+
+stargazer(reg_animals_fe , reg_intensive_fe , reg_plow_fe , reg_female_fe , reg_popd_fe , reg_slavery_fe , reg_central_fe , type = "html" , title = "Robustness test: Fixed effects (province) ")
+
+#>
+```
+
+The significance level got a little smaller but the regressions still stay significant. Also, the standard errors did not get a lot bigger. These results reassure us that the TSI does capture direct biological effect.
+  
+   
+*This exercise refers to page 15 - 17 of the paper.*
+
+## Exercise 10 -- Conclusion and Outlook 
+
+In this chapter, we want to shortly summarize our methods and findings and discuss approaches of Tsetse control. 
+
+### Summary
+
+In this problem set we analyzed the effect of TseTse transmitted disease on the historical and modern development of Africa. The peculiarity of the paper written by Marcella Alsan are the methods she used to measure the TseTse distribution. The TseTse suitability index is measured by performing laboratory experiments to describe the physiology of TseTse and the use of insect growth models based on climate data to define a steady state population of the fly. 
+In the following we used the TSI to run regressions on ethnographic precolonial data. We analyzed inter alia the correlation with subsistence strategies, societies, and centralization.
+
+What did we find out concerning the precolonial development?
+In Africa there is a correlation between the TSI calculated with historical climate data and agricultural practices classified as less advanced, a stronger slave labor system and a lower population density. It is reassuring for our hypothesis that regressions on African development with data from groups living outside Africa did not reach significance.
+
+In the next test we simulated the African development variables with a lower TSI level. The results are moderate increases in the precolonial outcome variables measuring political and institutional centralization as well as intensive farming. But we must be careful in interpreting this simulation. The results do not take into account endogenous responses to the elimination of TseTse.
+
+Subsequently we investigated archaeological findings of further developed societies. These civilizations developed mainly in the regions of Africa which show a low TSI. This is consistent with the theory that the TseTse slowed down the African development. 
+
+What are our findings regarding effect of the TseTse on the modern African development?
+
+To find out, we first performed regressions on luminosity as a measure of economics and political outcome and second on the amount of cattle, both with modern data. TseTse appears to still impact today's development in Africa mostly through historical centralization. The theory is that TSI hindered the development of advanced societies and this has a negative effect on the long-term development perspective. While regressing on the number of cattle we find a negative correlation even when controlling for precolonial institutions and using of country fixed effects. This finding points out that the TseTse has still a direct impact on husbandry in today's Africa. So, it is an important key to understand and enhance African development and animal farming. 
+
+#< quiz "TseTse economic deficit and animal loss"
+question: Have a guess! How big is the approximated annual economic deficit caused by the TseTse?
+sc:
+    - 1 million dollar
+    - 4 million dollar
+    - 1 billion dollar
+    - 4 billion dollar*
+    - 10 billion dollar
+success: Great, your answer is correct!
+failure: Try again.
+#>
+
+This number is estimated by experts from IAEA in 2002. The IAEA (2002) also measured that Nagana transmitted by the TseTse is responsible for an annual death rate of 3 million cattle.
+   
+### Discussion
+
+As a last step we want to shortly discuss the pros and cons of approaches aiming to control Trypanosomiasis. And how promising they are to eliminate this sickness from Africa.
+
+If we think about a solution, two possibilities come into mind. Either we eradicate the TseTse so there is no longer a vector to transmit Trypanosomiasis or we vaccinate all animals before they can get infected. 
+
+What about medication? Treatments for infected animals do exist but they are expensive. In a few countries the sales of trypanosomiasis treatment accounts for over 50 % of the total sales on veterinary drugs. Also, the diagnosis costs money which many farmers cannot afford so most drugs are given without a diagnose. Through this practice the treatment gets inefficient because an increasing number of residences occur (Feldmann & Hendrichs 2001; De Deken o.J., p. 5).
+So, at the state of current research this is not the optimal way to fight trypanosomiases (Kroubi et al. 2011).
+
+We already discussed several eradication campaigns in an info block before. But it is difficult to completely eradicate the TseTse from the whole continent. Also, there might be a negative impact on the biodiversity if the fly is exterminated. Intensive agriculture and an increase in livestock farming will replace historically developed sustainable systems of land use and co-exist with the fauna (Anderson et al. 2015).
+
+Some experts see vaccination as the only long-lasting, effective, and safe way to fight the sleeping sickness.
+A vaccination does not exist yet. We do find a natural immunity in wildlife. On this base it might be possible to develop a vaccination against the sleeping sickness which creates an immune protection. Researches focused to create a vaccination which primes at the surface of the parasite which is composed by millions of proteins. But there are constant recreations which make it hard to create a vaccination fitting all.
+(La Greca and Magez 2011)
+
+In summary we can say that there is still much work required to find an optimal way in order to control the sleeping sickness.
+  
+### Thank you!
+Now we have already reached the end of our economic journey. But do not be sad there are more problem sets to various topics that cannot wait to be solved by you. Just right click [here](https://github.com/skranz/RTutor) and open a new tab to get an overview.
+
+Thanks for staying till the end!
+
+To see the number of awards you earned while working through the exercises together with a description you can click check:
+```{r "10 a)", results= 'asis', optinal=TRUE}
+#< task
+awards(as.html=TRUE)
+#>
+```
+
+#< award "Finisher"
+Great, you did it!  
+You solved the problem set and reached the end.    
+I hope you liked the interactive analysis, learned something new about econometrics or programming in R, and reached a better understanding of the
+coherences in African development.
+#>
+
+## Exercise Bibliography -- References
+
+### Books, Papers, and Websites:  
+
+* Acemoglu, D., & Robinson, J. A. (2013). Why nations fail: The origins of power, prosperity, and poverty. Crown Business.  
+* Alesina, A., Giuliano, P., & Nunn, N. (2013). On the origins of gender roles: Women and the plough. The Quarterly Journal of Economics, 128(2), 469-530.  
+* Ampim, M. (2004): "Great Zimbabwe: A history almost forgotten." URL: http://manuampim.com/ZIMBABWE.html (last downloaded 2017-03-17).   
+* Anderson, N. E., Mubanga, J., Machila, N., Atkinson, P. M., Dzingirai, V., & Welburn, S. C. (2015). sleeping sickness and its relationship with development and biodiversity conservation in the Luangwa Valley, Zambia. Parasites & vectors, 8(1), 224.  
+* Auer, B., & Rottmann, H. (2015). Statistik und Ökonometrie für Wirtschaftswissenschaftler, Springer Fachmedien Wiesbaden.  
+* Bairoch, P. (1988): Cities and Economic Development: From the Dawn of History to the Present. Chicago: University of Chicago Press.   
+* Beneria, L., & Sen, G. (1981). Accumulation, reproduction, and" women's role in economic development": Boserup revisited. Signs: Journal of Women in Culture and Society, 7(2), 279-298.  
+* Bonnassie, P., & Cohen, L. (1991). From Slavery to Feudalism. Cambridge: Cambridge University Press.  
+* Brown, K., & Gilfoyle, D. (Eds.). (2010). Healing the herds: disease, livestock economies, and the globalization of veterinary medicine. Ohio University Press.  
+* Chen, X., & Nordhaus, W. D. (2010). The value of luminosity data as a proxy for economic statistics (No. w16317). National Bureau of Economic Research.  
+* CRAN, URL: https://cran.r-project.org/ (last downloaded 2017-03-14).   
+* De Deken, R. (o. J.). Tsetse flies. URL: http://www.afrivip.org/sites/default/files/09_tsetse_control.pdf (last downloaded 2017-03-14).  
+* Domar, E. D. (1970). The causes of slavery or serfdom: a hypothesis. The Journal of Economic History, 30(01), 18-32.  
+* Doyle, A. C. (1892): Sherlock Holmes: A Case of Identity.  
+* Feldmann, U., & Hendrichs, J. (2001). Integrating the sterile insect technique as a key component of area-wide tsetse and trypanosomiasis intervention (Vol. 3). Food & Agriculture Org. URL: www.fao.org/docrep/004/Y2022E/y2022e02.htm (last downloaded 2017-03-20).    
+* Findsen, A., Pedersen, T. H., Petersen, A. G., Nielsen, O. B., & Overgaard, J. (2014). Why do insects enter and recover from chill coma? Low temperature and high extracellular potassium compromise muscle function in Locusta migratoria. Journal of Experimental Biology, 217(8), 1297-1306.  
+* Fukuyama, F. (2011). The origins of political order: From prehuman times to the French Revolution. Macmillan.  
+* Gennaioli, N., & Rainer, I. (2007). The modern impact of precolonial centralization in Africa. Journal of Economic Growth, 12(3), 185-234.  
+* Glasgow, J. P. (1963). The distribution and abundance of tsetse. The Distribution and Abundance of Tsetse.  
+* Gollin, D., & Zimmermann, C. (2007). Malaria: Disease impacts and long-run income differences.    
+* Huffman, T. N. (2009). Mapungubwe and Great Zimbabwe: The origin and spread of social complexity in southern Africa. Journal of Anthropological Archaeology, 28(1), 37-54.    
+* IAEA (2002): Campaign Launched to Eliminate Tsetse Fly. URL: www.iaea.org/newscenter/pressreleases/campaign-launched-eliminate-TseTse-fly (last downloaded 2017-03-17).    
+* Kennedy, P. (2003). A guide to econometrics. MIT press.  
+* Kiszewski, A., Mellinger, A., Spielman, A., Malaney, P., Sachs, S. E., & Sachs, J. (2004). A global index representing the stability of malaria transmission. The American journal of tropical medicine and hygiene, 70(5), 486-498.  
+* Klaas, G. M. (2012). Just Plain Data Analysis. Lanham, MD: Rowman & Littefield.  
+* Kroubi, M., Karembe, H., & Betbeder, D. (2011). Drug delivery systems in the treatment of African trypanosomiasis infections. Expert opinion on drug delivery, 8(6), 735-747.  
+* La Greca, F., & Magez, S. (2011). Vaccination against trypanosomiasis: can it be done or is the trypanosome truly the ultimate immune destroyer and escape artist?. Human vaccines, 7(11), 1225-1233.  
+* Laveissière, C., Camara, M., Rayaisse, J. B., Salou, E., Kagbadouno, M., & Solano, P. (2011). Trapping tsetse flies on water. Parasite, 18(2), 141-144.  
+* Loewe, L. (2008). Negative selection. Nature Education, 1(1), 59.  
+* Michalopoulos, S., & Papaioannou, E. (2013). Pre-Colonial Ethnic Institutions and Contemporary African Development. Econometrica, 81(1), 113-152.  
+* Michalopoulos, S., & Papaioannou, E. (2012). National institutions and subnational development in Africa (No. w18275). National Bureau of Economic Research.  
+* Michalopoulos, S., & Papaioannou, E. (2015). On the ethnic origins of African development: Chiefs and precolonial political centralization. The Academy of Management Perspectives, 29(1), 32-71.  
+* Murdock, G. P. (1959): Tribal map of Africa. New York: McGraw-Hill, Inc.  
+* Murdock, G. P. (1967). Ethnographic atlas.  
+* National Oceanic and Atmospheric Administration (1871): 20th Century Reanalysis, URL: www.esrl.noaa.gov/psd/data/gridded/data.20thC_ReanV2.html (last downloaded: 2017-03-21).  
+* Nieboer, H. J. (2013). Slavery as an industrial system: Ethnological researches. Springer.  
+* Rogers, D. J., & Randolph, S. E. (1986). Distribution and abundance of tsetse flies (Glossina spp.). The Journal of Animal Ecology, 1007-1025.  
+* Schowalter, T. D. (2016). Insect ecology: an ecosystem approach. Academic Press.  
+* Vigen, Taylor (o. J.). Spurious correlations. URL: http://tylervigen.com/spurious-correlations (last downloaded: 2017-04-15).  
+* Wooldridge, J.M. (2010): Introductory Econometrics: A Modern Approach. 4nd edition, Mason, Ohio: South-Western.    
+* Wooldridge, J.M. (2013): Introductory Econometrics: A Modern Approach. 5nd edition, Mason, Ohio: South-Western. 
+
+### R Packages:  
+
+* 'dplyr': Wickham, H. & R. Francois (2016): dplyr: A Grammar of Data Manipulation. R package version 0.5.0. https://CRAN.R-project.org/package=dplyr.  
+* 'foreign': R Core Team (2015): foreign: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, Weka, dBase, .... R package version 0.8-66. https://CRAN.R-project.org/package=foreign.  
+* 'ggmap': Kahle D & Wickham, H. (2009): Spatial Visualization with ggplot2. The R Journal, 5(1), 144-161. URL http://journal.r-project.org/archive/2013-1/kahle-wickham.pdf.  
+* 'ggplot2': Wickham, H. (2009): ggplot2: Elegant Graphics for Data Analysis. New York, NY: Springer-Verlag.   
+* 'lfe': Gaure, S. (2013): lfe: Linear group fixed effects. The R Journal, 5(2), pp.104-117.  
+* 'lmtest': Zeileis, A. & T. Hothorn (2002): Diagnostic Checking in Regression Relationships. R News, 2(3), pp.7-10. http://CRAN.R-project.org/doc/Rnews/.  
+* R Core Team (2016). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.  
+* 'regtools': Kranz, S. (2016): regtools: Some tools for regressions and presentation of regressions results. R package version 0.2. https://github.com/skranz/regtools.  
+* 'RTutor': Kranz, S. (2015): RTutor: R problem sets with automatic test of solution and hints. R package version 2015.12.16. https://github.com/skranz/RTutor.  
+* 'stargazer': Hlavac, M. (2015): stargazer: Well-Formatted Regression and Summary Statistics Tables. R package version 5.2. http://CRAN.R-project.org/package=stargazer.  
+
+### Images:
+* By International Atomic Energy Agency - International Atomic Energy Agency, CC BY-SA 4.0, https://commons.wikimedia.org/w/index.php?curid=42087829
+
+### Code and Data:
+
+* original data sets and available STATA code files: Alsan, M. (2014). The effect of the tsetse fly on African development. The American Economic Review, 105(1), 382-410.
+http://https://www.aeaweb.org/aer/data/10501/20130604_data.zip.
+
+### License:
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.  
+
+Author: Vanessa Schoeller  
