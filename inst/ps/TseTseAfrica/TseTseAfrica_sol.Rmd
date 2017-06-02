@@ -12,7 +12,8 @@ library(restorepoint)
 library(RTutor)
 library(yaml)
 #library(restorepoint)
-setwd("C:/Users/Vanessa/Desktop/Uni")
+setwd("D:/libraries/RTutorTseTse/RTutorTseTse/inst/ps/TseTseAfrica")
+#setwd("C:/Users/Vanessa/Desktop/Uni")
 ps.name = "TseTseAfrica"; sol.file = paste0(ps.name,"_sol.Rmd")
 libs = c("ggplot2", "foreign", "ggmap", "regtools", "lfe", "dplyr", "stargazer", "lmtest", "sandwich") # character vector of all packages you load in the problem set
 #name.rmd.chunks(sol.file) # set auto chunk names in this file

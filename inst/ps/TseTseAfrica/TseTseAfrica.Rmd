@@ -498,7 +498,7 @@ summary(reg_husbandry_cc)
 coef(linreg_husbandry)
 ```
 
-If we control for the tropics, the effect of TSI on <span style="color:mediumvioletred">husbandry</span> gets stronger (Do not get confused. The coefficient $\beta$ gets smaller/more negative). The coefficient changes because of the underlying correlations between the tropics and TSI respectively <span style="color:mediumvioletred">husbandry</span> we discussed beforehand. 
+If we control for the tropics, the effect of TSI on <span style="color:mediumvioletred">husbandry</span> gets weeker (Do not get confused. The coefficient $\beta$ gets bigger/less negative). The coefficient changes because of the underlying correlations between the tropics and TSI respectively <span style="color:mediumvioletred">husbandry</span> we discussed beforehand. 
 
 So much for the effect of the tropics. In a next step, we will add the dummy variable <span style="color:mediumvioletred">river</span> which indicates if there was a river in the area of the ethnic population. Once again you can have a guess before we calculate the change in the regression coefficient after adding the new control variable.
 
@@ -607,9 +607,8 @@ Now it is your turn to apply the function <span style="color:mediumvioletred">ef
 ```
 
 
-When looking at the effectplot we see on the left the names of the independent variables. The length and color of the bars tells us more about the size and direction of the effect on <span style="color:mediumvioletred">husbandry</span>. We can see at one glance if the correlation is positive (blue) or negative (red). The explanatory variables are ordered in ascending order according to their effect size. For dummy variables like <span style="color:mediumvioletred">coast</span> or <span style="color:mediumvioletred">river</span> the numbers written in the vertical bars describe the effect from a change from 0 to 1.
-We observe that TSI is in the middle of the effect sizes and has a negative impact. The variables controlling for climate show a huge correlation whereas for example the malaria index or the proportion of land area in the tropics are negligible.   
-Earlier we discussed which characteristic of the tropics influence <span style="color:mediumvioletred">husbandry</span>. Now we got the answer. The effect of the tropics on <span style="color:mediumvioletred">husbandry</span> is through the climate control variables. While controlling for climate the impact of the tropics equals zero whereas the climate controls show a high correlation.
+When looking at the effectplot we see on the left the names of the independent variables. The length and color of the bars tells us more about the size and direction of the effect on <span style="color:mediumvioletred">husbandry</span>. We can see at one glance if the correlation is positive (blue) or negative (red). The explanatory variables are ordered in ascending order according to their effect size. For dummy variables like <span style="color:mediumvioletred">coast</span> or <span style="color:mediumvioletred">river</span> the numbers written in the vertical bars describe the effect from a change from 0 to 1. An exception is the dummy <span style="color:mediumvioletred">prop_tropics</span> which changes from one to one, so the effect on husbandry is zero and we can not interpret it.
+We observe that TSI is in the middle of the effect sizes and has a negative impact. The variables controlling for climate show a huge correlation whereas for example the malaria index is negligible.  
   
   
 *This exercise refers to page 6 - 7 and 14 - 15 of the paper.*
@@ -1669,7 +1668,7 @@ awards(as.html=TRUE)
 * Alesina, A., Giuliano, P., & Nunn, N. (2013). On the origins of gender roles: Women and the plough. The Quarterly Journal of Economics, 128(2), 469-530.  
 * Ampim, M. (2004): "Great Zimbabwe: A history almost forgotten." URL: http://manuampim.com/ZIMBABWE.html (last downloaded 2017-03-17).   
 * Anderson, N. E., Mubanga, J., Machila, N., Atkinson, P. M., Dzingirai, V., & Welburn, S. C. (2015). sleeping sickness and its relationship with development and biodiversity conservation in the Luangwa Valley, Zambia. Parasites & vectors, 8(1), 224.  
-* Auer, B., & Rottmann, H. (2015). Statistik und Ökonometrie für Wirtschaftswissenschaftler, Springer Fachmedien Wiesbaden.  
+* Auer, B., & Rottmann, H. (2015). Statistik und Oekonometrie fuer Wirtschaftswissenschaftler, Springer Fachmedien Wiesbaden.  
 * Bairoch, P. (1988): Cities and Economic Development: From the Dawn of History to the Present. Chicago: University of Chicago Press.   
 * Beneria, L., & Sen, G. (1981). Accumulation, reproduction, and" women's role in economic development": Boserup revisited. Signs: Journal of Women in Culture and Society, 7(2), 279-298.  
 * Bonnassie, P., & Cohen, L. (1991). From Slavery to Feudalism. Cambridge: Cambridge University Press.  
